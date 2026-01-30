@@ -152,7 +152,7 @@
       const resp = await fetch("./effects.feather");
       const buf = await resp.arrayBuffer();
       
-      const table = Arrow.Table.from(new Uint8Array(buf));
+      const table = Arrow.tableFromIPC(new Uint8Array(buf));
       // Convert Arrow table to array of JS objects (simple; OK at your scale)
       rows = table.toArray().map(r => r.toJSON ? r.toJSON() : r);
 
@@ -175,6 +175,7 @@
   </script>
 </body>
 </html>
+
 
 
 
