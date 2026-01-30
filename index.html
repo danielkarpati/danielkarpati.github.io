@@ -2,181 +2,278 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>Disease Effects Explorer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Disease Effects Explorer (CSV)</title>
+
+  <!-- Plotly for charts -->
   <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/apache-arrow@14.0.2/Arrow.es2015.min.js"></script>
+
+  <!-- Papa Parse for fast CSV parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
   <style>
-    body { font-family: system-ui, sans-serif; margin: 16px; }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    select, input { padding: 6px; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 16px; }
+    h2 { margin: 0 0 10px 0; }
+    .hint { color: #444; margin: 0 0 14px 0; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+    label { font-size: 14px; }
+    select, input { padding: 6px; font-size: 14px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; margin: 12px 0; }
     #chart { width: 100%; height: 520px; }
+    #status { color: #444; font-size: 14px; }
+    .small { font-size: 12px; color: #555; }
+    .split { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 900px) { .split { grid-template-columns: 360px 1fr; } }
+    button { padding: 8px 10px; font-size: 14px; }
   </style>
 </head>
 <body>
-  <h2>Disease effects explorer</h2>
+  <h2>Disease effects explorer (CSV)</h2>
+  <p class="hint">
+    Loads <code>effects.csv</code> in the browser and filters instantly. Host on GitHub Pages/Netlify (don’t open locally).
+  </p>
 
-  <div class="row">
-    <label>Disease:
-      <select id="disease"></select>
-    </label>
+  <div class="split">
+    <div class="card">
+      <div id="status">Loading data…</div>
+      <div class="small" style="margin-top:8px;">
+        Expected files in the same folder: <code>index.html</code>, <code>effects.csv</code>
+      </div>
 
-    <label>Outcome:
-      <select id="outcome"></select>
-    </label>
+      <div style="height:10px;"></div>
 
-    <label>Sex:
-      <select id="sex"></select>
-    </label>
+      <div class="row">
+        <label>Disease<br/>
+          <select id="disease"></select>
+        </label>
+        <label>Outcome<br/>
+          <select id="outcome"></select>
+        </label>
+      </div>
 
-    <label>Age group:
-      <select id="age"></select>
-    </label>
+      <div style="height:10px;"></div>
+
+      <div class="row">
+        <label>Sex<br/>
+          <select id="sex"></select>
+        </label>
+        <label>Age group<br/>
+          <select id="age"></select>
+        </label>
+        <label>Region<br/>
+          <select id="region"></select>
+        </label>
+      </div>
+
+      <div style="height:10px;"></div>
+
+      <div class="row">
+        <label>Compare<br/>
+          <select id="compareMode">
+            <option value="income">Low vs High income</option>
+            <option value="all24">All 24 groups (thin lines)</option>
+          </select>
+        </label>
+      </div>
+
+      <div style="height:10px;"></div>
+
+      <div class="row">
+        <label>Year min<br/>
+          <input id="yrMin" type="number" value="-5" min="-5" max="5" step="1"/>
+        </label>
+        <label>Year max<br/>
+          <input id="yrMax" type="number" value="5" min="-5" max="5" step="1"/>
+        </label>
+      </div>
+
+      <div style="height:10px;"></div>
+
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <div class="card">
+      <div id="chart"></div>
+      <div class="small">
+        Hover for estimate, CI, p-value, n. Use “All 24 groups” to see heterogeneity patterns over time.
+      </div>
+    </div>
   </div>
 
-  <div class="row" style="margin-top:10px;">
-    <label>Compare income:
-      <select id="incomeMode">
-        <option value="low_high">Low vs High</option>
-        <option value="all24">All heterogeneity groups</option>
-      </select>
-    </label>
+<script>
+  let rows = [];
 
-    <label>Year range:
-      <input id="yrMin" type="number" value="-5" min="-5" max="5" step="1">
-      to
-      <input id="yrMax" type="number" value="5" min="-5" max="5" step="1">
-    </label>
-  </div>
+  function uniq(arr) {
+    return [...new Set(arr)].sort((a,b) => (a > b) ? 1 : (a < b) ? -1 : 0);
+  }
 
-  <div id="chart"></div>
+  function fillSelect(id, values) {
+    const sel = document.getElementById(id);
+    sel.innerHTML = "";
+    values.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = v;
+      sel.appendChild(opt);
+    });
+  }
 
-  <script>
-    let rows = []; // array of plain JS objects
+  function getVal(id) { return document.getElementById(id).value; }
+  function setStatus(msg) { document.getElementById("status").textContent = msg; }
 
-    function uniq(arr) { return [...new Set(arr)].sort(); }
+  function clampYearInputs() {
+    let a = parseInt(document.getElementById("yrMin").value, 10);
+    let b = parseInt(document.getElementById("yrMax").value, 10);
+    if (isNaN(a)) a = -5;
+    if (isNaN(b)) b = 5;
+    a = Math.max(-5, Math.min(5, a));
+    b = Math.max(-5, Math.min(5, b));
+    if (a > b) [a,b] = [b,a];
+    document.getElementById("yrMin").value = a;
+    document.getElementById("yrMax").value = b;
+    return [a,b];
+  }
 
-    function fillSelect(id, values) {
-      const sel = document.getElementById(id);
-      sel.innerHTML = "";
-      values.forEach(v => {
-        const opt = document.createElement("option");
-        opt.value = v;
-        opt.textContent = v;
-        sel.appendChild(opt);
-      });
+  function render() {
+    if (!rows.length) return;
+
+    const disease = getVal("disease");
+    const outcome = getVal("outcome");
+    const sex = getVal("sex");
+    const age = getVal("age");
+    const region = getVal("region");
+    const mode = getVal("compareMode");
+    const [yrMin, yrMax] = clampYearInputs();
+
+    // Base filter for selection
+    const base = rows.filter(r =>
+      r.disease === disease &&
+      r.outcome === outcome &&
+      r.sex === sex &&
+      r.age_group === age &&
+      r.region === region &&
+      r.rel_year >= yrMin &&
+      r.rel_year <= yrMax
+    );
+
+    if (base.length === 0) {
+      Plotly.newPlot("chart", [], { title: "No data for this selection" }, {responsive:true});
+      setStatus("No matching rows.");
+      return;
     }
 
-    function getVal(id) { return document.getElementById(id).value; }
+    let traces = [];
 
-    function render() {
-      const disease = getVal("disease");
-      const outcome = getVal("outcome");
-      const sex = getVal("sex");
-      const age = getVal("age");
-      const mode = getVal("incomeMode");
-      const yrMin = parseInt(document.getElementById("yrMin").value, 10);
-      const yrMax = parseInt(document.getElementById("yrMax").value, 10);
+    if (mode === "income") {
+      ["low", "high"].forEach(inc => {
+        const s = base
+          .filter(r => r.income === inc)
+          .sort((a,b) => a.rel_year - b.rel_year);
 
-      // filter for the chosen disease/outcome/sex/age and year range
-      const subset = rows.filter(r =>
-        r.disease === disease &&
-        r.outcome === outcome &&
-        r.sex === sex &&
-        r.age_group === age &&
-        r.rel_year >= yrMin &&
-        r.rel_year <= yrMax
-      );
+        if (!s.length) return;
 
-      if (subset.length === 0) {
-        Plotly.newPlot("chart", [], {title: "No data for this selection"});
-        return;
-      }
-
-      let traces = [];
-
-      if (mode === "low_high") {
-        const incomes = ["low", "high"]; // adjust to your labels
-        incomes.forEach(inc => {
-          const s = subset.filter(r => r.income === inc).sort((a,b) => a.rel_year - b.rel_year);
-          if (s.length === 0) return;
-
-          const x = s.map(r => r.rel_year);
-          const y = s.map(r => r.estimate);
-          const text = s.map(r =>
+        traces.push({
+          type: "scatter",
+          mode: "lines+markers",
+          name: inc,
+          x: s.map(r => r.rel_year),
+          y: s.map(r => r.estimate),
+          text: s.map(r =>
             `Year: ${r.rel_year}<br>` +
             `Estimate: ${r.estimate.toFixed(3)}<br>` +
             `95% CI: [${r.ci_low.toFixed(3)}, ${r.ci_high.toFixed(3)}]<br>` +
             `p: ${Number(r.p_value).toExponential(2)}<br>` +
             `n: ${r.n}`
-          );
-
-          traces.push({
-            type: "scatter",
-            mode: "lines+markers",
-            name: inc,
-            x, y,
-            text,
-            hoverinfo: "text"
-          });
+          ),
+          hoverinfo: "text"
         });
-      } else {
-        // show all combined heterogeneity groups (thin lines)
-        const groups = uniq(subset.map(r => r.het_group_id));
-        groups.forEach(g => {
-          const s = subset.filter(r => r.het_group_id === g).sort((a,b)=>a.rel_year-b.rel_year);
-          const x = s.map(r => r.rel_year);
-          const y = s.map(r => r.estimate);
-          traces.push({
-            type: "scatter",
-            mode: "lines",
-            name: g,
-            x, y,
-            hoverinfo: "skip",
-            opacity: 0.35
-          });
+      });
+    } else {
+      // All 24 groups for this disease/outcome across sex/age/region/income (ignore the selectors except disease/outcome + year range)
+      const all = rows.filter(r =>
+        r.disease === disease &&
+        r.outcome === outcome &&
+        r.rel_year >= yrMin &&
+        r.rel_year <= yrMax
+      );
+
+      const groups = uniq(all.map(r => r.het_group_id));
+      groups.forEach(g => {
+        const s = all.filter(r => r.het_group_id === g).sort((a,b) => a.rel_year - b.rel_year);
+        traces.push({
+          type: "scatter",
+          mode: "lines",
+          name: g,
+          x: s.map(r => r.rel_year),
+          y: s.map(r => r.estimate),
+          hoverinfo: "skip",
+          opacity: 0.25
         });
-      }
-
-      const layout = {
-        title: `${disease} → ${outcome} (${sex}, ${age})`,
-        xaxis: { title: "Years relative to baseline", dtick: 1 },
-        yaxis: { title: "Effect estimate", zeroline: true },
-        legend: { orientation: "h" }
-      };
-
-      Plotly.newPlot("chart", traces, layout, {responsive: true});
+      });
     }
 
-    async function loadData() {
-      // IMPORTANT: effects.feather must be served by a web host (not opened as a local file)
-      const resp = await fetch("./effects_v2.feather");
-      const buf = await resp.arrayBuffer();
-      
-      const table = Arrow.tableFromIPC(new Uint8Array(buf));
-      // Convert Arrow table to array of JS objects (simple; OK at your scale)
-      rows = table.toArray().map(r => r.toJSON ? r.toJSON() : r);
+    const layout = {
+      title: `${disease} → ${outcome}`,
+      xaxis: { title: "Years relative to baseline", dtick: 1 },
+      yaxis: { title: "Effect estimate", zeroline: true },
+      margin: {l: 55, r: 20, t: 50, b: 55},
+      legend: { orientation: "h" }
+    };
 
-      // populate selectors
+    Plotly.newPlot("chart", traces, layout, {responsive: true});
+    setStatus(`Loaded ${rows.length.toLocaleString()} rows. Showing ${base.length.toLocaleString()} matching rows.`);
+  }
+
+  async function loadData() {
+    try {
+      const resp = await fetch("./effects.csv?cb=1");
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const text = await resp.text();
+
+      const parsed = Papa.parse(text, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true
+      });
+
+      if (parsed.errors && parsed.errors.length) {
+        console.warn(parsed.errors);
+      }
+
+      rows = parsed.data;
+
+      // Populate selectors
       fillSelect("disease", uniq(rows.map(r => r.disease)));
       fillSelect("outcome", uniq(rows.map(r => r.outcome)));
       fillSelect("sex", uniq(rows.map(r => r.sex)));
       fillSelect("age", uniq(rows.map(r => r.age_group)));
+      fillSelect("region", uniq(rows.map(r => r.region)));
 
-      // render initial plot + hook changes
-      ["disease","outcome","sex","age","incomeMode","yrMin","yrMax"].forEach(id => {
+      // Hook UI events
+      ["disease","outcome","sex","age","region","compareMode","yrMin","yrMax"].forEach(id => {
         document.getElementById(id).addEventListener("change", render);
         document.getElementById(id).addEventListener("input", render);
       });
 
-      render();
-    }
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        document.getElementById("yrMin").value = -5;
+        document.getElementById("yrMax").value = 5;
+        document.getElementById("compareMode").value = "income";
+        document.getElementById("sex").selectedIndex = 0;
+        document.getElementById("age").selectedIndex = 0;
+        document.getElementById("region").selectedIndex = 0;
+        render();
+      });
 
-    loadData();
-  </script>
+      setStatus(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+      render();
+    } catch (e) {
+      console.error(e);
+      setStatus("Failed to load effects.csv. Make sure you are on the GitHub Pages URL (https://...github.io/...) and the file exists.");
+    }
+  }
+
+  loadData();
+</script>
 </body>
 </html>
-
-
-
-
-
