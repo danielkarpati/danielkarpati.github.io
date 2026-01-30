@@ -149,7 +149,7 @@
 
     async function loadData() {
       // IMPORTANT: effects.feather must be served by a web host (not opened as a local file)
-      const resp = await fetch("./effects.feather");
+      const resp = await fetch("./effects_v2.feather");
       const buf = await resp.arrayBuffer();
       
       const table = Arrow.tableFromIPC(new Uint8Array(buf));
@@ -175,6 +175,7 @@
   </script>
 </body>
 </html>
+
 
 
 
