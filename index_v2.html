@@ -36,7 +36,7 @@
   <div class="grid">
     <div class="card">
       <div id="status" class="status">Loading data…</div>
-      <div class="small">Expected files in same folder: <span class="mono">index.html</span>, <span class="mono">effects.csv</span></div>
+      <div class="small">Expected files in same folder: <span class="mono">index.html</span>, <span class="mono">effects_v2.csv</span></div>
       <div style="height:10px;"></div>
 
       <div class="row">
@@ -251,7 +251,7 @@
   async function loadData() {
     try {
       // cache-bust for GitHub Pages
-      const resp = await fetch("./effects.csv?cb=1");
+      const resp = await fetch("./effects_v2.csv?cb=1");
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const text = await resp.text();
 
@@ -305,7 +305,7 @@
       render();
     } catch (e) {
       console.error(e);
-      setStatus("Failed to load effects.csv. Make sure you're on the GitHub Pages URL (https://...github.io/...) and the file exists.");
+      setStatus("Failed to load effects_v2.csv. Make sure you're on the GitHub Pages URL (https://...github.io/...) and the file exists.");
     }
   }
 
@@ -313,3 +313,4 @@
 </script>
 </body>
 </html>
+
