@@ -1,0 +1,1 @@
+# danielkarpati.github.io
