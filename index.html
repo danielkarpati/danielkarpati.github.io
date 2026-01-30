@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Disease Effects Explorer</title>
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apache-arrow@14.0.2/Arrow.es2015.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 16px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    select, input { padding: 6px; }
+    #chart { width: 100%; height: 520px; }
+  </style>
+</head>
+<body>
+  <h2>Disease effects explorer</h2>
+
+  <div class="row">
+    <label>Disease:
+      <select id="disease"></select>
+    </label>
+
+    <label>Outcome:
+      <select id="outcome"></select>
+    </label>
+
+    <label>Sex:
+      <select id="sex"></select>
+    </label>
+
+    <label>Age group:
+      <select id="age"></select>
+    </label>
+  </div>
+
+  <div class="row" style="margin-top:10px;">
+    <label>Compare income:
+      <select id="incomeMode">
+        <option value="low_high">Low vs High</option>
+        <option value="all24">All heterogeneity groups</option>
+      </select>
+    </label>
+
+    <label>Year range:
+      <input id="yrMin" type="number" value="-5" min="-5" max="5" step="1">
+      to
+      <input id="yrMax" type="number" value="5" min="-5" max="5" step="1">
+    </label>
+  </div>
+
+  <div id="chart"></div>
+
+  <script>
+    let rows = []; // array of plain JS objects
+
+    function uniq(arr) { return [...new Set(arr)].sort(); }
+
+    function fillSelect(id, values) {
+      const sel = document.getElementById(id);
+      sel.innerHTML = "";
+      values.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        sel.appendChild(opt);
+      });
+    }
+
+    function getVal(id) { return document.getElementById(id).value; }
+
+    function render() {
+      const disease = getVal("disease");
+      const outcome = getVal("outcome");
+      const sex = getVal("sex");
+      const age = getVal("age");
+      const mode = getVal("incomeMode");
+      const yrMin = parseInt(document.getElementById("yrMin").value, 10);
+      const yrMax = parseInt(document.getElementById("yrMax").value, 10);
+
+      // filter for the chosen disease/outcome/sex/age and year range
+      const subset = rows.filter(r =>
+        r.disease === disease &&
+        r.outcome === outcome &&
+        r.sex === sex &&
+        r.age_group === age &&
+        r.rel_year >= yrMin &&
+        r.rel_year <= yrMax
+      );
+
+      if (subset.length === 0) {
+        Plotly.newPlot("chart", [], {title: "No data for this selection"});
+        return;
+      }
+
+      let traces = [];
+
+      if (mode === "low_high") {
+        const incomes = ["low", "high"]; // adjust to your labels
+        incomes.forEach(inc => {
+          const s = subset.filter(r => r.income === inc).sort((a,b) => a.rel_year - b.rel_year);
+          if (s.length === 0) return;
+
+          const x = s.map(r => r.rel_year);
+          const y = s.map(r => r.estimate);
+          const text = s.map(r =>
+            `Year: ${r.rel_year}<br>` +
+            `Estimate: ${r.estimate.toFixed(3)}<br>` +
+            `95% CI: [${r.ci_low.toFixed(3)}, ${r.ci_high.toFixed(3)}]<br>` +
+            `p: ${Number(r.p_value).toExponential(2)}<br>` +
+            `n: ${r.n}`
+          );
+
+          traces.push({
+            type: "scatter",
+            mode: "lines+markers",
+            name: inc,
+            x, y,
+            text,
+            hoverinfo: "text"
+          });
+        });
+      } else {
+        // show all combined heterogeneity groups (thin lines)
+        const groups = uniq(subset.map(r => r.het_group_id));
+        groups.forEach(g => {
+          const s = subset.filter(r => r.het_group_id === g).sort((a,b)=>a.rel_year-b.rel_year);
+          const x = s.map(r => r.rel_year);
+          const y = s.map(r => r.estimate);
+          traces.push({
+            type: "scatter",
+            mode: "lines",
+            name: g,
+            x, y,
+            hoverinfo: "skip",
+            opacity: 0.35
+          });
+        });
+      }
+
+      const layout = {
+        title: `${disease} → ${outcome} (${sex}, ${age})`,
+        xaxis: { title: "Years relative to baseline", dtick: 1 },
+        yaxis: { title: "Effect estimate", zeroline: true },
+        legend: { orientation: "h" }
+      };
+
+      Plotly.newPlot("chart", traces, layout, {responsive: true});
+    }
+
+    async function loadData() {
+      // IMPORTANT: effects.feather must be served by a web host (not opened as a local file)
+      const resp = await fetch("./effects.feather");
+      const buf = await resp.arrayBuffer();
+
+      const table = arrow.Table.from(new Uint8Array(buf));
+      // Convert Arrow table to array of JS objects (simple; OK at your scale)
+      rows = table.toArray().map(r => r.toJSON ? r.toJSON() : r);
+
+      // populate selectors
+      fillSelect("disease", uniq(rows.map(r => r.disease)));
+      fillSelect("outcome", uniq(rows.map(r => r.outcome)));
+      fillSelect("sex", uniq(rows.map(r => r.sex)));
+      fillSelect("age", uniq(rows.map(r => r.age_group)));
+
+      // render initial plot + hook changes
+      ["disease","outcome","sex","age","incomeMode","yrMin","yrMax"].forEach(id => {
+        document.getElementById(id).addEventListener("change", render);
+        document.getElementById(id).addEventListener("input", render);
+      });
+
+      render();
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
