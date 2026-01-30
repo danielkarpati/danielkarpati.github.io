@@ -802,76 +802,73 @@
       return;
     }
 
-    const nodeIds = new Set([center]);
-    edges.forEach(e => { nodeIds.add(e.source); nodeIds.add(e.target); });
-    const nodes = [...nodeIds];
 
-    // Stable circular layout (interactive hover/zoom)
-    const n = nodes.length;
-    const pos = {};
-    nodes.forEach((id, i) => {
-      const a = 2 * Math.PI * i / n;
-      pos[id] = { x: Math.cos(a), y: Math.sin(a) };
-    });
 
-    const wAbs = edges.map(e => Math.abs(e.w));
-    const wMax = Math.max(...wAbs, 1e-9);
 
-    // One trace per edge to vary width + hovertext
-    const edgeTraces = edges.map(e => {
-      const x0 = pos[e.source].x, y0 = pos[e.source].y;
-      const x1 = pos[e.target].x, y1 = pos[e.target].y;
+const nodeIds = new Set([center]);
+edges.forEach(e => { nodeIds.add(e.source); nodeIds.add(e.target); });
+const nodes = [...nodeIds];
 
-      const srcName = __diseaseMetaById?.[e.source]?.disease || e.source;
-      const dstName = __diseaseMetaById?.[e.target]?.disease || e.target;
+// --- Layout: center disease in the middle, neighbors on a circle ---
+const neighbors = nodes.filter(id => id !== center).sort();
+const m = neighbors.length;
 
-      const width = 1 + 6 * (Math.abs(e.w) / wMax);
-      return {
-        type: "scatter",
-        mode: "lines",
-        x: [x0, x1],
-        y: [y0, y1],
-        line: { width },
-        hoverinfo: "text",
-        text: `${srcName} → ${dstName}<br>ΔP(T+1): ${(e.w*100).toFixed(1)} pp`
-      };
-    });
+const pos = {};
+pos[center] = { x: 0, y: 0 };
 
-    // Node size by total absolute weight shown
-    const nodeWeight = {};
-    nodes.forEach(id => nodeWeight[id] = 0);
-    edges.forEach(e => {
-      nodeWeight[e.source] += Math.abs(e.w);
-      nodeWeight[e.target] += Math.abs(e.w);
-    });
+neighbors.forEach((id, i) => {
+  const a = 2 * Math.PI * i / Math.max(m, 1);
+  const R = 1.0;
+  pos[id] = { x: R * Math.cos(a), y: R * Math.sin(a) };
+});
 
-    const nodeSizes = nodes.map(id => {
-      const base = 10;
-      const extra = 25 * (nodeWeight[id] / wMax);
-      return base + extra;
-    });
+// --- Edges: single color, hover shows link strength ---
+const wAbs = edges.map(e => Math.abs(e.w));
+const wMax = Math.max(...wAbs, 1e-9);
 
-    const nodeTrace = {
-      type: "scatter",
-      mode: "markers+text",
-      x: nodes.map(id => pos[id].x),
-      y: nodes.map(id => pos[id].y),
-      text: nodes.map(id => (id === center ? centerName : (__diseaseMetaById?.[id]?.disease || id))),
-      textposition: "top center",
-      hoverinfo: "text",
-      hovertext: nodes.map(id => (__diseaseMetaById?.[id]?.disease || id)),
-      marker: { size: nodeSizes }
-    };
+// one trace per edge so hover works per-link
+const edgeTraces = edges.map(e => {
+  const x0 = pos[e.source].x, y0 = pos[e.source].y;
+  const x1 = pos[e.target].x, y1 = pos[e.target].y;
 
-    const title = direction === "out" ? `Outgoing edges from: ${centerName}` : `Incoming edges to: ${centerName}`;
+  const srcName = __diseaseMetaById?.[e.source]?.disease || e.source;
+  const dstName = __diseaseMetaById?.[e.target]?.disease || e.target;
 
-    Plotly.newPlot("graph3", [...edgeTraces, nodeTrace], {
-      title,
-      xaxis: { visible: false },
-      yaxis: { visible: false },
-      margin: { l: 10, r: 10, t: 50, b: 10 },
-      showlegend: false
-    }, {responsive:true});
+  const width = 1 + 6 * (Math.abs(e.w) / wMax);  // weight -> thickness (kept)
+  return {
+    type: "scatter",
+    mode: "lines",
+    x: [x0, x1],
+    y: [y0, y1],
+    line: { width, color: "#333" },   // single edge color
+    hoverinfo: "text",
+    text: `${srcName} → ${dstName}<br>Link strength: ${(e.w*100).toFixed(1)} pp`
+  };
+});
+
+// --- Nodes: uniform circle size (no weighting) ---
+const nodeTrace = {
+  type: "scatter",
+  mode: "markers+text",
+  x: nodes.map(id => pos[id].x),
+  y: nodes.map(id => pos[id].y),
+  text: nodes.map(id => (id === center ? centerName : (__diseaseMetaById?.[id]?.disease || id))),
+  textposition: "top center",
+  hoverinfo: "text",
+  hovertext: nodes.map(id => (__diseaseMetaById?.[id]?.disease || id)),
+  marker: { size: 14 }   // uniform size
+};
+
+const title = direction === "out" ? `Outgoing edges from: ${centerName}` : `Incoming edges to: ${centerName}`;
+
+Plotly.newPlot("graph3", [...edgeTraces, nodeTrace], {
+  title,
+  xaxis: { visible: false },
+  yaxis: { visible: false },
+  margin: { l: 10, r: 10, t: 50, b: 10 },
+  showlegend: false
+}, {responsive:true});
+
 
     $("graphInfo3").textContent = `${edges.length} edge(s) shown. Hover lines for ΔP(T+1).`;
   }
