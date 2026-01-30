@@ -1,0 +1,315 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Disease Effects Explorer (CSV)</title>
+
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 16px; }
+    h2 { margin: 0 0 10px 0; }
+    .hint { color: #444; margin: 0 0 14px 0; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 950px) { .grid { grid-template-columns: 420px 1fr; } }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
+    #chart { width: 100%; height: 560px; }
+    label { font-size: 13px; display: block; }
+    select, input { padding: 6px; font-size: 14px; width: 100%; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .small { font-size: 12px; color: #555; }
+    .status { font-size: 14px; color: #444; margin-bottom: 8px; }
+    button { padding: 8px 10px; font-size: 14px; }
+    .ms { height: 110px; } /* multi-select height */
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <h2>Effects dashboard (CSV)</h2>
+  <p class="hint">
+    Select up to <b>2</b> values for disease/sex/age/income → up to <b>16</b> lines. Outcome is single-select.
+  </p>
+
+  <div class="grid">
+    <div class="card">
+      <div id="status" class="status">Loading data…</div>
+      <div class="small">Expected files in same folder: <span class="mono">index.html</span>, <span class="mono">effects.csv</span></div>
+      <div style="height:10px;"></div>
+
+      <div class="row">
+        <div>
+          <label>Outcome (single)</label>
+          <select id="outcome"></select>
+        </div>
+        <div>
+          <label>Year min / max</label>
+          <div class="row">
+            <input id="yrMin" type="number" value="-5" min="-5" max="5" step="1"/>
+            <input id="yrMax" type="number" value="5" min="-5" max="5" step="1"/>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:10px;"></div>
+
+      <label>Disease (max 2)</label>
+      <select id="disease" class="ms" multiple></select>
+
+      <div style="height:10px;"></div>
+
+      <div class="row3">
+        <div>
+          <label>Sex (max 2)</label>
+          <select id="sex" class="ms" multiple></select>
+        </div>
+        <div>
+          <label>Age group (max 2)</label>
+          <select id="age" class="ms" multiple></select>
+        </div>
+        <div>
+          <label>Income (max 2)</label>
+          <select id="income" class="ms" multiple></select>
+        </div>
+      </div>
+
+      <div style="height:10px;"></div>
+
+      <div class="row">
+        <button id="resetBtn">Reset</button>
+        <div class="small" id="lineInfo" style="align-self:center;"></div>
+      </div>
+
+      <div style="height:8px;"></div>
+      <div class="small">
+        Tip: multi-select = Ctrl/Cmd-click to toggle; Shift-click to select ranges.
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="chart"></div>
+      <div class="small">
+        Hover shows estimate, CI, p-value, n. If some combinations don’t exist in the data, those lines won’t appear.
+      </div>
+    </div>
+  </div>
+
+<script>
+  let rows = [];
+
+  function uniq(arr) {
+    return [...new Set(arr)].sort((a,b) => (a > b) ? 1 : (a < b) ? -1 : 0);
+  }
+
+  function fillSelectSingle(id, values) {
+    const sel = document.getElementById(id);
+    sel.innerHTML = "";
+    values.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = v;
+      sel.appendChild(opt);
+    });
+  }
+
+  function fillSelectMulti(id, values, preselectN=1) {
+    const sel = document.getElementById(id);
+    sel.innerHTML = "";
+    values.forEach((v, i) => {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = v;
+      if (i < preselectN) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function getSelected(id) {
+    return Array.from(document.getElementById(id).selectedOptions).map(o => o.value);
+  }
+
+  function setStatus(msg) {
+    document.getElementById("status").textContent = msg;
+  }
+
+  function clampYearInputs() {
+    let a = parseInt(document.getElementById("yrMin").value, 10);
+    let b = parseInt(document.getElementById("yrMax").value, 10);
+    if (isNaN(a)) a = -5;
+    if (isNaN(b)) b = 5;
+    a = Math.max(-5, Math.min(5, a));
+    b = Math.max(-5, Math.min(5, b));
+    if (a > b) [a,b] = [b,a];
+    document.getElementById("yrMin").value = a;
+    document.getElementById("yrMax").value = b;
+    return [a,b];
+  }
+
+  // Enforce max selections for a multi-select
+  function enforceMax2(selectId) {
+    const sel = document.getElementById(selectId);
+    const selected = Array.from(sel.selectedOptions);
+    if (selected.length <= 2) return;
+
+    // Deselect earliest-selected-looking option (approx: deselect the first in DOM order)
+    // (Simple + predictable; avoids needing to track click order.)
+    selected[0].selected = false;
+  }
+
+  function product(arrays) {
+    return arrays.reduce((acc, curr) => {
+      const out = [];
+      acc.forEach(a => curr.forEach(b => out.push(a.concat([b]))));
+      return out;
+    }, [[]]);
+  }
+
+  function render() {
+    if (!rows.length) return;
+
+    enforceMax2("disease");
+    enforceMax2("sex");
+    enforceMax2("age");
+    enforceMax2("income");
+
+    const outcome = document.getElementById("outcome").value;
+    const diseases = getSelected("disease");
+    const sexes = getSelected("sex");
+    const ages = getSelected("age");
+    const incomes = getSelected("income");
+    const [yrMin, yrMax] = clampYearInputs();
+
+    // If user deselected everything in a multiselect, treat as "no plot"
+    if (!diseases.length || !sexes.length || !ages.length || !incomes.length) {
+      Plotly.newPlot("chart", [], { title: "Select at least 1 value in each multi-select" }, {responsive:true});
+      document.getElementById("lineInfo").textContent = "";
+      return;
+    }
+
+    const combos = product([diseases, sexes, ages, incomes]); // [disease, sex, age, income]
+    document.getElementById("lineInfo").textContent = `Target lines: ${combos.length} (max 16)`;
+
+    // Pre-filter by outcome and year to speed repeated line creation
+    const base = rows.filter(r =>
+      r.outcome === outcome &&
+      r.rel_year >= yrMin &&
+      r.rel_year <= yrMax
+    );
+
+    const traces = [];
+    let foundLines = 0;
+
+    for (const [d, s, a, inc] of combos) {
+      const series = base
+        .filter(r => r.disease === d && r.sex === s && r.age_group === a && r.income === inc)
+        .sort((x,y) => x.rel_year - y.rel_year);
+
+      if (!series.length) continue;
+
+      foundLines += 1;
+
+      traces.push({
+        type: "scatter",
+        mode: "lines+markers",
+        name: `${d} | ${s} | ${a} | ${inc}`,
+        x: series.map(r => r.rel_year),
+        y: series.map(r => r.estimate),
+        text: series.map(r =>
+          `Disease: ${r.disease}<br>` +
+          `Outcome: ${r.outcome}<br>` +
+          `Sex: ${r.sex}, Age: ${r.age_group}, Income: ${r.income}<br>` +
+          `Year: ${r.rel_year}<br>` +
+          `Estimate: ${Number(r.estimate).toFixed(3)}<br>` +
+          `95% CI: [${Number(r.ci_low).toFixed(3)}, ${Number(r.ci_high).toFixed(3)}]<br>` +
+          `p: ${Number(r.p_value).toExponential(2)}<br>` +
+          `n: ${r.n}`
+        ),
+        hoverinfo: "text"
+      });
+    }
+
+    if (!traces.length) {
+      Plotly.newPlot("chart", [], { title: "No data for selected combinations" }, {responsive:true});
+      setStatus(`Loaded ${rows.length.toLocaleString()} rows. No matching series.`);
+      return;
+    }
+
+    const layout = {
+      title: `${outcome} — ${foundLines} line(s)`,
+      xaxis: { title: "Years relative to baseline", dtick: 1 },
+      yaxis: { title: "Effect estimate", zeroline: true },
+      margin: {l: 60, r: 20, t: 55, b: 55},
+      legend: { orientation: "h" }
+    };
+
+    Plotly.newPlot("chart", traces, layout, {responsive: true});
+    setStatus(`Loaded ${rows.length.toLocaleString()} rows. Rendering ${foundLines} series.`);
+  }
+
+  async function loadData() {
+    try {
+      // cache-bust for GitHub Pages
+      const resp = await fetch("./effects.csv?cb=1");
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const text = await resp.text();
+
+      const parsed = Papa.parse(text, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true
+      });
+
+      rows = parsed.data;
+
+      // Basic schema check (optional but helpful)
+      const needed = ["disease","outcome","sex","age_group","income","rel_year","estimate","ci_low","ci_high","p_value","n"];
+      const missing = needed.filter(k => !(k in (rows[0] || {})));
+      if (missing.length) {
+        setStatus("CSV missing columns: " + missing.join(", "));
+        Plotly.newPlot("chart", [], { title: "Fix CSV schema (missing columns)" }, {responsive:true});
+        return;
+      }
+
+      // Populate selectors
+      fillSelectSingle("outcome", uniq(rows.map(r => r.outcome)));
+
+      // Multi-selects: preselect 1 disease, all sex/age/income (but enforce max2 => will keep first 2)
+      fillSelectMulti("disease", uniq(rows.map(r => r.disease)), 1);
+      fillSelectMulti("sex", uniq(rows.map(r => r.sex)), 2);
+      fillSelectMulti("age", uniq(rows.map(r => r.age_group)), 2);
+      fillSelectMulti("income", uniq(rows.map(r => r.income)), 2);
+
+      // Hook events
+      ["outcome","disease","sex","age","income","yrMin","yrMax"].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener("change", () => { render(); });
+        el.addEventListener("input", () => { render(); });
+      });
+
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        document.getElementById("yrMin").value = -5;
+        document.getElementById("yrMax").value = 5;
+
+        // Reset selections
+        Array.from(document.getElementById("disease").options).forEach((o,i) => o.selected = (i === 0));
+        Array.from(document.getElementById("sex").options).forEach((o,i) => o.selected = (i < 2));
+        Array.from(document.getElementById("age").options).forEach((o,i) => o.selected = (i < 2));
+        Array.from(document.getElementById("income").options).forEach((o,i) => o.selected = (i < 2));
+
+        render();
+      });
+
+      setStatus(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+      render();
+    } catch (e) {
+      console.error(e);
+      setStatus("Failed to load effects.csv. Make sure you're on the GitHub Pages URL (https://...github.io/...) and the file exists.");
+    }
+  }
+
+  loadData();
+</script>
+</body>
+</html>
