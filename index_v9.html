@@ -84,49 +84,54 @@
     .tablewrap { max-height: 580px; overflow: auto; }
     .right { text-align: right; }
   
-    /* Diagnoses drawer */
-    .drawer { position: fixed; top: 70px; right: 16px; width: 420px; max-width: calc(100vw - 32px);
-              height: calc(100vh - 86px); background: #fff; border: 1px solid #ddd; border-radius: 12px;
-              box-shadow: 0 10px 30px rgba(0,0,0,0.12); padding: 12px; z-index: 50; overflow: hidden; }
-    .drawer.hidden { display: none; }
-    .drawerHeader { display:flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-    .drawerTitle { font-weight: 700; font-size: 16px; }
-    .drawerBody { overflow:auto; height: calc(100% - 44px); padding-right: 4px; }
-    .section { margin: 12px 0; }
-    .sectionTitle { font-weight: 650; margin-bottom: 6px; }
-    .stackbar { display:flex; width: 100%; height: 12px; border-radius: 999px; overflow:hidden; border: 1px solid #ddd; }
-    .seg { height: 100%; }
-    .seg1 { background: #2b6cb0; }
-    .seg2 { background: #38a169; }
-    .seg3 { background: #b83280; }
-
-    /* Hierarchy list */
-    .groupRow { cursor: pointer; user-select:none; display:flex; align-items:center; gap:8px;
-                padding: 8px 10px; border: 1px solid #e6e6e6; border-radius: 10px; margin: 8px 0; background:#fafafa; }
-    .groupRow:hover { background:#f3f3f3; }
-    .chev { width: 16px; display:inline-block; text-align:center; }
-    .groupName { font-weight: 650; }
-    .groupMeta { margin-left:auto; color:#555; font-size: 12px; }
-
-    .diseaseList { margin: 6px 0 10px 22px; }
-    .diseaseRow { cursor:pointer; padding: 6px 10px; border-left: 2px solid #eee; margin: 2px 0; border-radius: 8px; }
-    .diseaseRow:hover { background:#f6f6ff; }
-    .diseaseRow.active { background:#edf2ff; border-left-color:#5a67d8; }
-    .diseaseMono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; }
+    /* Diagnoses tab */
+    .diagWrap { display:grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 980px) { .diagWrap { grid-template-columns: 1fr; } } /* list uses full width; drawer overlays */
+    .diagSearch { width: 100%; padding: 8px 10px; border:1px solid #ccc; border-radius: 12px; }
+    .diagGroup { border: 1px solid #eee; border-radius: 12px; padding: 8px 10px; }
+    .diagGroup > summary { font-weight: 700; }
+    .diagRow { display:grid; grid-template-columns: 120px 90px 1fr; gap: 10px; padding: 8px 6px; border-top: 1px solid #f2f2f2; cursor:pointer; }
+    .diagRow:hover { background:#fafafa; }
+    .diagHdr { display:grid; grid-template-columns: 120px 90px 1fr; gap: 10px; padding: 6px; font-size: 12px; color:#666; }
+    .drawer {
+      position: fixed;
+      top: 0; right: 0;
+      height: 100vh;
+      width: min(460px, 92vw);
+      background: #fff;
+      border-left: 1px solid #ddd;
+      box-shadow: -10px 0 24px rgba(0,0,0,0.12);
+      z-index: 100;
+      transform: translateX(110%);
+      transition: transform 180ms ease-out;
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawerHeader { padding: 12px 14px; border-bottom: 1px solid #eee; display:flex; justify-content: space-between; align-items:flex-start; gap: 10px; }
+    .drawerTitle { font-weight: 800; font-size: 15px; margin:0; }
+    .drawerSub { font-size: 12px; color:#555; margin-top: 4px; }
+    .drawerBody { padding: 12px 14px; overflow:auto; }
+    .drawerClose { border: 1px solid #ccc; background:#fff; border-radius: 10px; padding: 6px 8px; cursor:pointer; }
+    .pill2 { display:inline-block; font-size:12px; color:#444; background:#f3f3f3; padding: 3px 8px; border-radius: 999px; }
+    .miniBar { height: 10px; width: 100%; background:#f1f1f1; border-radius: 999px; overflow:hidden; }
+    .miniBar > div { height: 100%; float:left; }
+    .kv { display:grid; grid-template-columns: 140px 1fr; gap: 8px; font-size: 13px; margin: 6px 0; }
+    .kv b { font-weight: 700; }
 
   </style>
 </head>
 <body>
   <h2>Effects dashboard</h2>
   <p class="hint">
-    Files expected next to this page: <span class="mono">effects_v3.csv</span>, <span class="mono">disease_links_with_names.csv</span>, <span class="mono">diagnoses_extra_v2.csv (hierarchy columns)</span>, and <span class="mono">diagnoses_extra_v2.csv</span>.
+    Files expected next to this page: <span class="mono">effects_v3.csv</span>, <span class="mono">disease_links_with_names.csv</span>, and <span class="mono">diagnoses_extra_v2.csv</span>.
   </p>
 
   <div class="tabs">
     <button id="tab1btn" class="tabbtn active" type="button">Effects explorer</button>
     <button id="tab2btn" class="tabbtn" type="button">Rank diseases</button>
-    <button id="tab5btn" class="tabbtn" type="button">Diagnoses</button>
     <button id="tab4btn" class="tabbtn" type="button">Scatter</button>
+    <button id="tab5btn" class="tabbtn" type="button">Diagnoses</button>
     <button id="tab3btn" class="tabbtn" type="button">Disease graph</button>
   </div>
 
@@ -272,61 +277,6 @@
     </div>
   </div>
 
-
-  <!-- TAB 5 -->
-  <div id="tab5" class="tabpane">
-    <div class="grid" style="grid-template-columns: 1fr;">
-      <div class="card">
-        <div class="row" style="align-items:center; gap:10px;">
-          <div style="flex:1;">
-            <div class="small" style="margin-bottom:6px;">Search diagnoses (ID, ICD code, name)</div>
-            <input id="diagSearch" class="input" type="text" placeholder="Type to search…" />
-          </div>
-          <div id="diagCount" class="small" style="min-width:180px; text-align:right;"></div>
-        </div>
-
-        <div style="margin-top:12px; display:flex; gap:14px;">
-          <div style="flex:1; min-width:280px;">
-            <div id="diagStatus" class="status">Loading diagnosis metadata…</div>
-            <div id="diagTree" style="margin-top:10px;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right drawer -->
-    <div id="diagDrawer" class="drawer hidden" aria-hidden="true">
-      <div class="drawerHeader">
-        <div>
-          <div id="drawerTitle" class="drawerTitle">Diagnosis details</div>
-          <div id="drawerSub" class="small"></div>
-        </div>
-        <button id="drawerClose" class="btn" type="button">Close</button>
-      </div>
-      <div class="drawerBody">
-        <div class="section">
-          <div class="sectionTitle">Treatment setting mix</div>
-          <div id="drawerSettingBar" class="stackbar" title="Outpatient / One-day / Inpatient">
-            <div id="barOut" class="seg seg1"></div>
-            <div id="barOne" class="seg seg2"></div>
-            <div id="barIn" class="seg seg3"></div>
-          </div>
-          <div id="drawerSettingText" class="small" style="margin-top:6px;"></div>
-        </div>
-
-        <div class="section">
-          <div class="sectionTitle">Diagnosed people by sex × age × income</div>
-          <div id="drawerCounts" class="small"></div>
-        </div>
-
-        <div class="section">
-          <div class="sectionTitle">Top 3 ICD-10 codes</div>
-          <div id="drawerTop3" class="small"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- TAB 4 -->
   <div id="tab4" class="tabpane">
     <div class="grid">
@@ -393,6 +343,38 @@
     </div>
   </div>
 
+
+  <!-- TAB 5 -->
+  <div id="tab5" class="tabpane">
+    <div class="grid">
+      <div class="card">
+        <div id="status5" class="status">Loading diagnoses…</div>
+        <div class="small">Search diagnoses; click a disease to open details.</div>
+        <div class="spacer"></div>
+        <input id="diagSearch" class="diagSearch" type="text" placeholder="Search by disease, ICD code, or internal id…" />
+        <div class="spacer"></div>
+        <div class="diagHdr">
+          <div><b>Internal id</b></div>
+          <div><b>ICD</b></div>
+          <div><b>ICD title</b></div>
+        </div>
+        <div id="diagList"></div>
+      </div>
+    </div>
+
+    <div id="diagDrawer" class="drawer" aria-hidden="true">
+      <div class="drawerHeader">
+        <div>
+          <div id="drawerTitle" class="drawerTitle">—</div>
+          <div id="drawerSub" class="drawerSub">—</div>
+        </div>
+        <button id="drawerClose" class="drawerClose" type="button">Close</button>
+      </div>
+      <div id="drawerBody" class="drawerBody"></div>
+    </div>
+  </div>
+
+
   <!-- TAB 3 -->
   <div id="tab3" class="tabpane">
     <div class="grid">
@@ -437,30 +419,220 @@
   let rows = [];
   let effectsIndex = new Map(); // key -> row
 
+  // ---------- Diagnoses tab ----------
+  let diagRows = [];
+  let diagById = new Map(); // disease_id -> row
+  let diagGroups = new Map(); // disease_group -> [disease_id]
+  function setStatus5(msg){ const el = $("status5"); if (el) el.textContent = msg; }
+
+  function openDrawer(did){
+    const drawer = $("diagDrawer");
+    const body = $("drawerBody");
+    const title = $("drawerTitle");
+    const sub = $("drawerSub");
+    const r = diagById.get(did);
+    if (!drawer || !r) return;
+
+    title.textContent = `${r.disease} (${r.disease_id})`;
+    sub.textContent = `ICD: ${r.icd_code} — ${r.icd_name} | Group: ${r.disease_group}`;
+
+    // treatment shares
+    const outp = Number(r.share_outpatient) || 0;
+    const oned = Number(r.share_oneday) || 0;
+    const inp  = Number(r.share_inpatient) || 0;
+
+    // counts by group (expects 12 columns named n_<Sex>_<Age>_<Income>)
+    const nKeys = Object.keys(r).filter(k => k.startsWith("n_") && k !== "n_total").sort();
+    const sexOrder = [];
+    const ageOrder = [];
+    const incomeOrder = [];
+
+    function partsFromKey(k){
+      // n_Female_Young_Low
+      const p = k.split("_").slice(1);
+      return { sex: p[0]||"", age: p[1]||"", income: p[2]||"" };
+    }
+    nKeys.forEach(k => {
+      const p = partsFromKey(k);
+      if (p.sex && !sexOrder.includes(p.sex)) sexOrder.push(p.sex);
+      if (p.age && !ageOrder.includes(p.age)) ageOrder.push(p.age);
+      if (p.income && !incomeOrder.includes(p.income)) incomeOrder.push(p.income);
+    });
+
+    // Build counts table HTML
+    let countsHtml = "";
+    if (sexOrder.length && ageOrder.length && incomeOrder.length){
+      countsHtml += `<div class="small" style="margin-top:10px;"><b>Diagnosed counts by sex × age × income</b></div>`;
+      countsHtml += `<div class="small" style="margin-top:4px;">Values are people diagnosed (2013–2017).</div>`;
+      countsHtml += `<div class="tablewrap" style="max-height:320px;margin-top:8px;">`;
+      countsHtml += `<table><thead><tr><th>Sex</th><th>Age</th>` + incomeOrder.map(i=>`<th class="right">${i}</th>`).join("") + `</tr></thead><tbody>`;
+      for (const sx of sexOrder){
+        for (const ag of ageOrder){
+          countsHtml += `<tr><td>${sx}</td><td>${ag}</td>`;
+          for (const inc of incomeOrder){
+            const key = `n_${sx}_${ag}_${inc}`;
+            const val = r[key];
+            countsHtml += `<td class="right">${(val==null||val==="") ? "—" : Number(val).toLocaleString()}</td>`;
+          }
+          countsHtml += `</tr>`;
+        }
+      }
+      countsHtml += `</tbody></table></div>`;
+    }
+
+    // Top-3 ICD10
+    const top = [
+      {code: r.top1_code, share: r.top1_share},
+      {code: r.top2_code, share: r.top2_share},
+      {code: r.top3_code, share: r.top3_share},
+    ].filter(x => x.code);
+
+    const topHtml = top.length ? (
+      `<div class="small" style="margin-top:12px;"><b>Top 3 ICD-10 codes within disease</b></div>` +
+      `<div class="tablewrap" style="max-height:240px;margin-top:8px;">` +
+      `<table><thead><tr><th>ICD-10</th><th class="right">Share</th></tr></thead><tbody>` +
+      top.map(x => `<tr><td>${x.code}</td><td class="right">${(Number(x.share)*100).toFixed(1)}%</td></tr>`).join("") +
+      `</tbody></table></div>`
+    ) : "";
+
+    const shareBar = `
+      <div class="small" style="margin-top:10px;"><b>Treatment setting mix</b></div>
+      <div class="kv"><div>Outpatient</div><div><span class="pill2">${(outp*100).toFixed(1)}%</span></div></div>
+      <div class="kv"><div>One-day</div><div><span class="pill2">${(oned*100).toFixed(1)}%</span></div></div>
+      <div class="kv"><div>Inpatient</div><div><span class="pill2">${(inp*100).toFixed(1)}%</span></div></div>
+      <div class="miniBar" title="Outpatient / One-day / Inpatient">
+        <div style="width:${Math.max(0,Math.min(100,outp*100))}%; background:#9bd3ae;"></div>
+        <div style="width:${Math.max(0,Math.min(100,oned*100))}%; background:#a8c5ff;"></div>
+        <div style="width:${Math.max(0,Math.min(100,inp*100))}%; background:#ffb0b0;"></div>
+      </div>
+    `;
+
+    body.innerHTML = `
+      <div class="kv"><div><b>Internal id</b></div><div class="mono">${r.disease_id}</div></div>
+      <div class="kv"><div><b>ICD</b></div><div class="mono">${r.icd_code}</div></div>
+      <div class="kv"><div><b>ICD title</b></div><div>${r.icd_name}</div></div>
+      <div class="kv"><div><b>Total diagnosed</b></div><div>${Number(r.n_total||0).toLocaleString()}</div></div>
+      ${shareBar}
+      ${countsHtml}
+      ${topHtml}
+    `;
+
+    drawer.classList.add("open");
+    drawer.setAttribute("aria-hidden","false");
+  }
+
+  function closeDrawer(){
+    const drawer = $("diagDrawer");
+    if (!drawer) return;
+    drawer.classList.remove("open");
+    drawer.setAttribute("aria-hidden","true");
+  }
+
+  function renderDiagnosesList(){
+    const listEl = $("diagList");
+    if (!listEl) return;
+    const q = ($("diagSearch")?.value || "").trim().toLowerCase();
+
+    listEl.innerHTML = "";
+    let shown = 0;
+
+    const groupNames = Array.from(diagGroups.keys()).sort((a,b)=>a.localeCompare(b));
+    for (const g of groupNames){
+      const ids = (diagGroups.get(g) || []).slice();
+      const visible = ids.filter(did => {
+        const r = diagById.get(did);
+        if (!r) return false;
+        if (!q) return true;
+        return (String(r.disease_id||"").toLowerCase().includes(q) ||
+                String(r.icd_code||"").toLowerCase().includes(q) ||
+                String(r.icd_name||"").toLowerCase().includes(q) ||
+                String(r.disease||"").toLowerCase().includes(q) ||
+                String(r.disease_group||"").toLowerCase().includes(q));
+      });
+
+      if (q && visible.length === 0) continue;
+
+      const details = document.createElement("details");
+      details.className = "diagGroup";
+      // if searching, auto-open matching groups
+      if (q) details.open = true;
+
+      const summary = document.createElement("summary");
+      summary.textContent = `${g} (${visible.length})`;
+      details.appendChild(summary);
+
+      const box = document.createElement("div");
+      visible.forEach(did => {
+        const r = diagById.get(did);
+        const row = document.createElement("div");
+        row.className = "diagRow";
+        row.innerHTML = `
+          <div class="mono">${r.disease_id}</div>
+          <div class="mono">${r.icd_code}</div>
+          <div>${r.icd_name}</div>
+        `;
+        row.onclick = () => openDrawer(did);
+        box.appendChild(row);
+        shown += 1;
+      });
+
+      details.appendChild(box);
+      listEl.appendChild(details);
+    }
+
+    setStatus5(diagRows.length ? `Loaded ${diagRows.length.toLocaleString()} diagnoses. Showing ${shown.toLocaleString()}.` : "No diagnoses loaded.");
+  }
+
+  async function loadDiagnoses(){
+    try{
+      setStatus5("Loading diagnoses…");
+      const resp = await fetch("./diagnoses_extra_v2.csv?cb=1");
+      if (!resp.ok) throw new Error(`HTTP ${resp.status} (diagnoses_extra_v2.csv)`);
+      const text = await resp.text();
+      const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
+      diagRows = parsed.data || [];
+      diagById = new Map();
+      diagGroups = new Map();
+
+      for (const r of diagRows){
+        if (!r.disease_id) continue;
+        diagById.set(r.disease_id, r);
+        const g = r.disease_group || "Other";
+        if (!diagGroups.has(g)) diagGroups.set(g, []);
+        diagGroups.get(g).push(r.disease_id);
+      }
+
+      // sort disease ids within group by ICD title then id
+      for (const [g, ids] of diagGroups.entries()){
+        ids.sort((a,b)=>{
+          const ra = diagById.get(a), rb = diagById.get(b);
+          const la = String(ra?.icd_name || ra?.disease || a);
+          const lb = String(rb?.icd_name || rb?.disease || b);
+          const c = la.localeCompare(lb);
+          return c !== 0 ? c : String(a).localeCompare(String(b));
+        });
+      }
+
+      const search = $("diagSearch");
+      if (search) search.addEventListener("input", renderDiagnosesList);
+      const closeBtn = $("drawerClose");
+      if (closeBtn) closeBtn.onclick = closeDrawer;
+
+      // close drawer on Esc
+      document.addEventListener("keydown", (e)=>{ if (e.key === "Escape") closeDrawer(); });
+
+      renderDiagnosesList();
+    } catch(e){
+      console.error(e);
+      setStatus5("Failed to load diagnoses_extra_v2.csv. Ensure it exists next to this page.");
+    }
+  }
+
   // ---------- shared helpers ----------
   function uniq(arr) { return [...new Set(arr)].sort((a,b) => (a > b) ? 1 : (a < b) ? -1 : 0); }
   function $(id) { return document.getElementById(id); }
   function toFixed3(x) { return Number(x).toFixed(3); }
   function exp2(x) { return Number(x).toExponential(2); }
-
-  function clamp01(x) {
-    x = Number(x);
-    if (!Number.isFinite(x)) return 0;
-    return Math.max(0, Math.min(1, x));
-  }
-  function fmtInt(x) {
-    const n = Number(x);
-    if (!Number.isFinite(n)) return "–";
-    return Math.round(n).toLocaleString();
-  }
-  function escapeHtml(s) {
-    return (s ?? "").toString()
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
 
   function idxKey(disease_id, outcome, sex, age_group, income, rel_year) {
     return `${disease_id}||${outcome}||${sex}||${age_group}||${income}||${rel_year}`;
@@ -1153,181 +1325,6 @@ function initPersonYears(sexVals, ageVals, incomeVals) {
     $("graphInfo3").textContent = "Select a disease and click a button.";
   }
 
-
-  // ===== Diagnoses tab (hierarchy + drawer) =====
-  let diagRows = [];        // derived from diagnoses_extra_v2.csv (includes hierarchy cols)
-  let diagExtra = new Map(); // disease_id -> extra row
-  let diagExpandedGroups = new Set();
-  let diagSelectedId = null;
-
-  async function loadDiagExtra() {
-    const resp = await fetch("./diagnoses_extra_v2.csv?cb=1");
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} (diagnoses_extra_v2.csv)`);
-    const text = await resp.text();
-    const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
-    diagExtra = new Map();
-    for (const r of parsed.data) {
-      if (!r.disease_id) continue;
-      diagExtra.set(String(r.disease_id), r);
-    }
-  }
-
-    // Build flat list for rendering (hierarchy columns are in this file)
-    diagRows = Array.from(diagExtra.values()).filter(r => r.disease_group && (r.disease || r.icd_name || r.icd_code));
-
-
-  function diagKey(s) { return (s ?? "").toString().toLowerCase().trim(); }
-
-  function renderDiagnosesTree() {
-    const el = $("diagTree");
-    if (!el) return;
-
-    const q = diagKey($("diagSearch")?.value || "");
-    const groups = new Map(); // group -> array of disease rows with merged extra
-    for (const r of diagRows) {
-      const id = String(r.disease_id);
-      const extra = r;
-      const disease = (r.disease || "").toString();
-      const icd = (extra.icd_code || "").toString();
-      const icdName = (extra.icd_name || "").toString();
-
-      const hay = `${id} ${disease} ${icd} ${icdName}`.toLowerCase();
-      if (q && !hay.includes(q)) continue;
-
-      if (!groups.has(r.disease_group)) groups.set(r.disease_group, []);
-      groups.get(r.disease_group).push({ ...r, ...extra });
-    }
-
-    // If searching, auto-expand all matching groups
-    if (q) {
-      diagExpandedGroups = new Set([...groups.keys()]);
-    } else if (diagExpandedGroups.size === 0) {
-      // default: collapse all
-      diagExpandedGroups = new Set();
-    }
-
-    const groupNames = [...groups.keys()].sort((a,b)=>String(a).localeCompare(String(b)));
-    el.innerHTML = "";
-
-    let totalShown = 0;
-    for (const g of groupNames) {
-      const arr = groups.get(g).slice().sort((a,b)=>String(a.disease_id).localeCompare(String(b.disease_id)));
-      totalShown += arr.length;
-
-      const expanded = diagExpandedGroups.has(g);
-      const groupRow = document.createElement("div");
-      groupRow.className = "groupRow";
-      groupRow.innerHTML = `
-        <span class="chev">${expanded ? "▾" : "▸"}</span>
-        <span class="groupName">${escapeHtml(g)}</span>
-        <span class="groupMeta">${arr.length} diseases</span>
-      `;
-      groupRow.onclick = () => {
-        if (diagExpandedGroups.has(g)) diagExpandedGroups.delete(g);
-        else diagExpandedGroups.add(g);
-        renderDiagnosesTree();
-      };
-      el.appendChild(groupRow);
-
-      const list = document.createElement("div");
-      list.className = "diseaseList";
-      list.style.display = expanded ? "block" : "none";
-
-      for (const d of arr) {
-        const row = document.createElement("div");
-        row.className = "diseaseRow" + (diagSelectedId === String(d.disease_id) ? " active" : "");
-        row.innerHTML = `
-          <div style="display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;">
-            <span class="diseaseMono">${escapeHtml(String(d.disease_id))}</span>
-            <span class="diseaseMono">${escapeHtml(String(d.icd_code || ""))}</span>
-            <span>${escapeHtml(String(d.icd_name || d.disease || ""))}</span>
-          </div>
-        `;
-        row.onclick = (ev) => {
-          ev.stopPropagation();
-          openDiagnosisDrawer(String(d.disease_id));
-        };
-        list.appendChild(row);
-      }
-      el.appendChild(list);
-    }
-
-    $("diagCount").textContent = q
-      ? `Showing ${totalShown} matches`
-      : `Showing ${totalShown} diagnoses`;
-
-    $("diagStatus").textContent = totalShown ? "Click a diagnosis to view details." : "No matches.";
-  }
-
-  function openDiagnosisDrawer(diseaseId) {
-    diagSelectedId = diseaseId;
-    const extra = diagExtra.get(String(diseaseId)) || {};
-    const meta = extra; // contains disease_group and disease from diagnoses_extra_v2.csv
-
-    // title/sub
-    $("drawerTitle").textContent = `${meta.disease || "Diagnosis"}`
-    const icdCode = extra.icd_code ? `ICD: ${extra.icd_code}` : "";
-    $("drawerSub").textContent = `${diseaseId}${icdCode ? " · " + icdCode : ""}`;
-
-    // setting shares
-    const out = clamp01(+extra.share_outpatient);
-    const one = clamp01(+extra.share_oneday);
-    const inp = clamp01(+extra.share_inpatient);
-    const sum = (out + one + inp) || 1;
-    const o = out/sum, d = one/sum, i = inp/sum;
-
-    $("barOut").style.width = `${(o*100).toFixed(1)}%`;
-    $("barOne").style.width = `${(d*100).toFixed(1)}%`;
-    $("barIn").style.width = `${(i*100).toFixed(1)}%`;
-    $("drawerSettingText").textContent =
-      `Outpatient ${(o*100).toFixed(1)}% · One-day ${(d*100).toFixed(1)}% · Inpatient ${(i*100).toFixed(1)}%`;
-
-    // counts table (12 groups, fixed labels)
-    const sexes = ["Female","Male"];
-    const ages = ["Young","Old"];
-    const incomes = ["Low","Mid","High"];
-    let html = `<table class="table" style="margin-top:6px;">
-      <thead><tr><th>Sex</th><th>Age</th><th>Income</th><th style="text-align:right;">Diagnosed (n)</th></tr></thead><tbody>`;
-    let total = 0;
-    for (const s of sexes) for (const a of ages) for (const inc of incomes) {
-      const k = `n_${s}_${a}_${inc}`;
-      const n = +extra[k];
-      if (Number.isFinite(n)) total += n;
-      html += `<tr><td>${escapeHtml(s)}</td><td>${escapeHtml(a)}</td><td>${escapeHtml(inc)}</td><td style="text-align:right;">${fmtInt(n)}</td></tr>`;
-    }
-    html += `</tbody></table><div class="small" style="margin-top:6px;">Total (sum of groups): <b>${fmtInt(total)}</b></div>`;
-    $("drawerCounts").innerHTML = html;
-
-    // top3 icd10
-    const top = [
-      { code: extra.top1_code, share: extra.top1_share },
-      { code: extra.top2_code, share: extra.top2_share },
-      { code: extra.top3_code, share: extra.top3_share },
-    ].filter(x => x.code);
-    let topHtml = "<ol style='margin:6px 0 0 18px;'>";
-    for (const t of top) {
-      topHtml += `<li><span class="diseaseMono">${escapeHtml(String(t.code))}</span> — ${(clamp01(+t.share)*100).toFixed(1)}%</li>`;
-    }
-    topHtml += "</ol>";
-    $("drawerTop3").innerHTML = topHtml;
-
-    // show drawer
-    const dr = $("diagDrawer");
-    dr.classList.remove("hidden");
-    dr.setAttribute("aria-hidden", "false");
-
-    // refresh list highlighting
-    renderDiagnosesTree();
-  }
-
-  function closeDiagnosisDrawer() {
-    diagSelectedId = null;
-    const dr = $("diagDrawer");
-    dr.classList.add("hidden");
-    dr.setAttribute("aria-hidden", "true");
-    renderDiagnosesTree();
-  }
-
   async function loadData() {
     try {
       const resp = await fetch("./effects_v3.csv?cb=1");
@@ -1538,35 +1535,18 @@ function initPersonYears(sexVals, ageVals, incomeVals) {
       setStatus4(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
       renderScatter();
 
-
-      // ---- Tab 5 (Diagnoses) ----
-      try {
-        await loadDiagExtra();
-        $("diagStatus").textContent = `Loaded ${diagRows.length.toLocaleString()} diagnoses.`;
-        $("diagSearch").addEventListener("input", () => renderDiagnosesTree());
-        $("drawerClose").onclick = () => closeDiagnosisDrawer();
-        // close drawer with Escape
-        document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") closeDiagnosisDrawer(); });
-        renderDiagnosesTree();
-      } catch (e) {
-        console.error("Diagnoses tab load failed:", e);
-        const ds = $("diagStatus"); if (ds) ds.textContent = "Failed to load diagnosis files. Ensure diagnoses_extra_v2.csv exists.";
-      }
       // ---- Tab 3 controls ----
-      try {
-        await loadLinks();
-        initTab3();
-      } catch (e) {
-        console.error(\"Links tab load failed:\", e);
-        setStatus3(\"Failed to load disease_links_with_names.csv. Ensure it exists next to this page.\");
-      }
+      await loadLinks();
+      initTab3();
+
+      // Load diagnoses data (independent of effects/links)
+      loadDiagnoses();
     } catch (e) {
       console.error(e);
-      setStatus1("Failed to load effects_v3.csv. Ensure it exists next to this page (and that you are serving via http(s), e.g., GitHub Pages).");
-      setStatus2("Failed to load effects_v3.csv. Ensure it exists next to this page (and that you are serving via http(s), e.g., GitHub Pages).");
-      setStatus3("Failed to load effects_v3.csv. Ensure it exists next to this page (and that you are serving via http(s), e.g., GitHub Pages).");
-      setStatus4("Failed to load effects_v3.csv. Ensure it exists next to this page (and that you are serving via http(s), e.g., GitHub Pages).");
-      const ds = $("diagStatus"); if (ds) ds.textContent = "Failed to load diagnosis files. Ensure diagnoses_extra_v2.csv exists.";
+      setStatus1("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
+      setStatus2("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
+      setStatus3("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
+      setStatus4("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
       Plotly.newPlot("chart", [], { title: "Data load failed" }, {responsive:true});
       Plotly.newPlot("scatter4", [], { title: "Data load failed" }, {responsive:true});
       Plotly.newPlot("graph3", [], { title: "Data load failed" }, {responsive:true});
