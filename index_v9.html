@@ -119,7 +119,7 @@
 <body>
   <h2>Effects dashboard</h2>
   <p class="hint">
-    Files expected next to this page: <span class="mono">effects_v3.csv</span>, <span class="mono">disease_links_with_names.csv</span>, <span class="mono">disease_hierarchy.csv</span>, and <span class="mono">diagnoses_extra.csv</span>.
+    Files expected next to this page: <span class="mono">effects_v3.csv</span>, <span class="mono">disease_links_with_names.csv</span>, <span class="mono">disease_hierarchy.csv</span>, and <span class="mono">diagnoses_extra_v2.csv</span>.
   </p>
 
   <div class="tabs">
@@ -1169,8 +1169,8 @@ function initPersonYears(sexVals, ageVals, incomeVals) {
   }
 
   async function loadDiagExtra() {
-    const resp = await fetch("./diagnoses_extra.csv?cb=1");
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} (diagnoses_extra.csv)`);
+    const resp = await fetch("./diagnoses_extra_v2.csv?cb=1");
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} (diagnoses_extra_v2.csv)`);
     const text = await resp.text();
     const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
     diagExtra = new Map();
@@ -1562,7 +1562,7 @@ function initPersonYears(sexVals, ageVals, incomeVals) {
       setStatus2("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
       setStatus3("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
       setStatus4("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
-      const ds = $("diagStatus"); if (ds) ds.textContent = "Failed to load diagnosis files. Ensure disease_hierarchy.csv and diagnoses_extra.csv exist.";
+      const ds = $("diagStatus"); if (ds) ds.textContent = "Failed to load diagnosis files. Ensure disease_hierarchy.csv and diagnoses_extra_v2.csv exist.";
       Plotly.newPlot("chart", [], { title: "Data load failed" }, {responsive:true});
       Plotly.newPlot("scatter4", [], { title: "Data load failed" }, {responsive:true});
       Plotly.newPlot("graph3", [], { title: "Data load failed" }, {responsive:true});
