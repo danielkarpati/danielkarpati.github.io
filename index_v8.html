@@ -805,22 +805,55 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
   // ---------- Tab 4: scatter (Option B) ----------
   function setStatus4(msg) { $("status4").textContent = msg; }
 
-  // Hard-coded person-years (t) by sex × age_group × income.
-  // These are placeholders used to compute incidence i = n / t for incidence-weighted scatter values.
-  const __personYearsByGroup = {
-    "Female|Young|Low": 2200000,
-    "Female|Young|Mid": 2500000,
-    "Female|Young|High": 2100000,
-    "Female|Old|Low": 1100000,
-    "Female|Old|Mid": 1300000,
-    "Female|Old|High": 900000,
-    "Male|Young|Low": 2000000,
-    "Male|Young|Mid": 2400000,
-    "Male|Young|High": 2000000,
-    "Male|Old|Low": 1000000,
-    "Male|Old|Mid": 1200000,
-    "Male|Old|High": 850000
-  };
+  // Person-years (t) by sex × age_group × income.
+// We initialize this *after* loading the CSV, using the actual category labels found in the data,
+// so keys always match the dropdown values (prevents the "no points" issue).
+let __personYearsByGroup = {};
+
+function initPersonYears(sexVals, ageVals, incomeVals) {
+  __personYearsByGroup = {};
+  // Create plausible placeholder totals (person-years) that vary by age/income/sex.
+  // Order-dependent but deterministic: we assume sexVals has ~2, ageVals ~2, incomeVals ~3.
+  const baseYoung = 2400000;
+  const baseOld   = 1300000;
+
+  const ageBase = {};
+  if (ageVals?.length) {
+    // first age -> "younger-ish", second -> "older-ish"
+    ageBase[ageVals[0]] = baseYoung;
+    if (ageVals.length > 1) ageBase[ageVals[1]] = baseOld;
+    // any additional ages (if present) get interpolated
+    for (let i=2;i<ageVals.length;i++){
+      ageBase[ageVals[i]] = Math.round(baseOld * (0.9 ** (i-1)));
+    }
+  }
+
+  const incomeMult = {};
+  if (incomeVals?.length) {
+    // low/mid/high-ish multipliers
+    incomeMult[incomeVals[0]] = 0.95;
+    if (incomeVals.length > 1) incomeMult[incomeVals[1]] = 1.00;
+    if (incomeVals.length > 2) incomeMult[incomeVals[2]] = 0.90;
+    for (let i=3;i<incomeVals.length;i++) incomeMult[incomeVals[i]] = 0.90;
+  }
+
+  const sexMult = {};
+  if (sexVals?.length) {
+    sexMult[sexVals[0]] = 1.00;
+    if (sexVals.length > 1) sexMult[sexVals[1]] = 0.98;
+    for (let i=2;i<sexVals.length;i++) sexMult[sexVals[i]] = 0.98;
+  }
+
+  for (const sx of (sexVals || [])) {
+    for (const ag of (ageVals || [])) {
+      for (const inc of (incomeVals || [])) {
+        const t = Math.round((ageBase[ag] || baseYoung) * (incomeMult[inc] || 1.0) * (sexMult[sx] || 1.0));
+        __personYearsByGroup[`${sx}|${ag}|${inc}`] = t;
+      }
+    }
+  }
+}
+
 
   function getPersonYears(sex, age_group, income) {
     const k = `${sex}|${age_group}|${income}`;
@@ -1044,6 +1077,9 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       const ageVals = uniq(rows.map(r => r.age_group));
       const incomeVals = uniq(rows.map(r => r.income));
       const yearVals = uniq(rows.map(r => r.rel_year)).sort((a,b)=>a-b);
+
+      // Initialize placeholder person-years (t) using the actual category labels
+      initPersonYears(sexVals, ageVals, incomeVals);
 
       // ---- Tab 1 outcome ----
       $("outcome1").innerHTML = "";
