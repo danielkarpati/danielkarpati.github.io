@@ -87,6 +87,8 @@
     /* Diagnoses tab */
     .diagWrap { display:grid; grid-template-columns: 1fr; gap: 12px; }
     @media (min-width: 980px) { .diagWrap { grid-template-columns: 1fr; } } /* list uses full width; drawer overlays */
+    /* The main dashboard uses a 430px left sidebar at >=980px. For Diagnoses we want a wider list panel. */
+    @media (min-width: 980px) { .diagGrid { grid-template-columns: 1fr; } }
     .diagSearch { width: 100%; padding: 8px 10px; border:1px solid #ccc; border-radius: 12px; }
     .diagGroup { border: 1px solid #eee; border-radius: 12px; padding: 8px 10px; }
     .diagGroup > summary { font-weight: 700; }
@@ -346,7 +348,7 @@
 
   <!-- TAB 5 -->
   <div id="tab5" class="tabpane">
-    <div class="grid">
+    <div class="grid diagGrid">
       <div class="card">
         <div id="status5" class="status">Loading diagnoses…</div>
         <div class="small">Search diagnoses; click a disease to open details.</div>
