@@ -1,0 +1,1205 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Effects dashboard</title>
+
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 16px; }
+    h2 { margin: 0 0 10px 0; }
+    .hint { color: #444; margin: 0 0 14px 0; }
+    .small { font-size: 12px; color: #555; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 12px; }
+    .status { font-size: 14px; color: #444; margin-bottom: 8px; }
+    label { font-size: 13px; display:block; margin-bottom: 4px; }
+    select, button, input { font-size: 14px; }
+    select { padding: 6px; width: 100%; }
+    button { padding: 8px 10px; cursor: pointer; }
+    .spacer { height: 10px; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 980px) { .grid { grid-template-columns: 430px 1fr; } }
+
+    /* Tabs */
+    .tabs { display:flex; gap:8px; margin: 10px 0 14px; flex-wrap: wrap; }
+    .tabbtn {
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 12px;
+    }
+    .tabbtn.active { border-color:#333; font-weight: 600; }
+    .tabpane { display:none; }
+    .tabpane.active { display:block; }
+
+    /* Dropdown checklist */
+    .dd { position: relative; }
+    .ddbtn {
+      width: 100%;
+      text-align: left;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .ddbtn:after { content: "▾"; float:right; }
+    .panel {
+      position: absolute;
+      z-index: 50;
+      left: 0;
+      right: 0;
+      margin-top: 6px;
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      max-height: 340px;
+      overflow: auto;
+      display: none;
+    }
+    .panel.open { display: block; }
+    .panel .actions { display:flex; gap:8px; align-items:center; margin-bottom: 8px; }
+    .panel input[type="text"] { width: 100%; padding: 7px 8px; border:1px solid #ccc; border-radius:10px; }
+    .panel .pill { font-size: 12px; color:#444; background:#f3f3f3; padding: 3px 8px; border-radius: 999px; }
+    .item { display:flex; align-items:center; gap:8px; padding: 4px 2px; }
+    .item input { transform: translateY(1px); }
+    details { border-top: 1px solid #f0f0f0; padding-top: 6px; margin-top: 6px; }
+    summary { cursor: pointer; font-weight: 600; }
+    .indent { padding-left: 14px; }
+    .disabled { opacity: 0.45; }
+
+    /* Plot/table */
+    #chart { width: 100%; height: 580px; }
+    #graph3 { width: 100%; height: 580px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; font-size: 13px; }
+    th { position: sticky; top: 0; background: #fff; z-index: 5; }
+    .tablewrap { max-height: 580px; overflow: auto; }
+    .right { text-align: right; }
+  </style>
+</head>
+<body>
+  <h2>Effects dashboard</h2>
+  <p class="hint">
+    Files expected next to this page: <span class="mono">effects_v3.csv</span> and <span class="mono">disease_links_with_names.csv</span>.
+  </p>
+
+  <div class="tabs">
+    <button id="tab1btn" class="tabbtn active" type="button">Effects explorer</button>
+    <button id="tab2btn" class="tabbtn" type="button">Rank diseases</button>
+    <button id="tab4btn" class="tabbtn" type="button">Scatter</button>
+    <button id="tab3btn" class="tabbtn" type="button">Disease graph</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <div id="tab1" class="tabpane active">
+    <div class="grid">
+      <div class="card">
+        <div id="status1" class="status">Loading data…</div>
+        <div class="small">Outcome is single-select. Disease/sex/age/income are checklist dropdowns (max 2 each). Years: <span class="mono">-5…+5</span>.</div>
+
+        <div class="spacer"></div>
+
+        <label>Outcome (single)</label>
+        <select id="outcome1"></select>
+
+        <div class="spacer"></div>
+
+        <label>Disease (max 2)</label>
+        <div class="dd">
+          <button class="ddbtn" id="btn-disease" type="button">Select up to 2…</button>
+          <div class="panel" id="panel-disease"></div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="row">
+          <div>
+            <label>Sex (max 2)</label>
+            <div class="dd">
+              <button class="ddbtn" id="btn-sex" type="button">Select up to 2…</button>
+              <div class="panel" id="panel-sex"></div>
+            </div>
+          </div>
+          <div>
+            <label>Income (max 2)</label>
+            <div class="dd">
+              <button class="ddbtn" id="btn-income" type="button">Select up to 2…</button>
+              <div class="panel" id="panel-income"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <label>Age group (max 2)</label>
+        <div class="dd">
+          <button class="ddbtn" id="btn-age" type="button">Select up to 2…</button>
+          <div class="panel" id="panel-age"></div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="row">
+          <button id="resetBtn1" type="button">Reset</button>
+          <div id="lineInfo" class="small" style="align-self:center;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div id="chart"></div>
+        <div class="small">Hover shows estimate, CI, p-value, n. Lines = all combos of selected diseases × sex × age × income (up to 16).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2 -->
+  <div id="tab2" class="tabpane">
+    <div class="grid">
+      <div class="card">
+        <div id="status2" class="status">Loading data…</div>
+        <div class="small">Choose subgroup + year + outcome, then rank diseases by estimate (optionally weighted by n).</div>
+
+        <div class="spacer"></div>
+
+        <label>Outcome</label>
+        <select id="outcome2"></select>
+
+        <div class="spacer"></div>
+
+        <div class="row">
+          <div><label>Sex</label><select id="sex2"></select></div>
+          <div><label>Income</label><select id="income2"></select></div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="row">
+          <div><label>Age group</label><select id="age2"></select></div>
+          <div><label>Year (relative)</label><select id="year2"></select></div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="row">
+          <div>
+            <label>Sort</label>
+            <select id="sort2">
+              <option value="desc">Descending (largest to smallest)</option>
+              <option value="asc">Ascending (smallest to largest)</option>
+            </select>
+          </div>
+          <div>
+            <label>Show</label>
+            <select id="top2">
+              <option value="25">Top 25</option>
+              <option value="50" selected>Top 50</option>
+              <option value="100">Top 100</option>
+              <option value="300">All</option>
+            </select>
+          </div>
+        </div>
+
+        
+        <div class="spacer"></div>
+
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="weightN2" />
+          Weight ranking by n (rank by n × estimate)
+        </label>
+<div class="spacer"></div>
+        <button id="resetBtn2" type="button">Reset</button>
+      </div>
+
+      <div class="card">
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Disease group</th>
+                <th>Disease</th>
+                <th class="right">Estimate</th>
+                <th class="right">CI low</th>
+                <th class="right">CI high</th>
+                <th class="right">p</th>
+                <th class="right">n</th>
+              </tr>
+            </thead>
+            <tbody id="rankBody"></tbody>
+          </table>
+        </div>
+        <div id="rankInfo" class="small" style="margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4 -->
+  <div id="tab4" class="tabpane">
+    <div class="grid">
+      <div class="card">
+        <div id="status4" class="status">Loading data…</div>
+        <div class="small">Option B: define Series X and Series Y independently (outcome + sex + age + income + year). Each point is a disease. Points with missing X or Y are excluded.</div>
+
+        <div class="spacer"></div>
+
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="weightN4" />
+          Use n-weighted values (plot n × estimate on both axes)
+        </label>
+
+        <div class="spacer"></div>
+
+        <details open>
+          <summary>Series X (x-axis)</summary>
+          <div class="indent">
+            <div class="spacer"></div>
+            <label>Outcome (X)</label>
+            <select id="outcomeX"></select>
+            <div class="spacer"></div>
+            <div class="row">
+              <div><label>Sex (X)</label><select id="sexX"></select></div>
+              <div><label>Income (X)</label><select id="incomeX"></select></div>
+            </div>
+            <div class="spacer"></div>
+            <div class="row">
+              <div><label>Age group (X)</label><select id="ageX"></select></div>
+              <div><label>Year (X, relative)</label><select id="yearX"></select></div>
+            </div>
+          </div>
+        </details>
+
+        <details open>
+          <summary>Series Y (y-axis)</summary>
+          <div class="indent">
+            <div class="spacer"></div>
+            <label>Outcome (Y)</label>
+            <select id="outcomeY"></select>
+            <div class="spacer"></div>
+            <div class="row">
+              <div><label>Sex (Y)</label><select id="sexY"></select></div>
+              <div><label>Income (Y)</label><select id="incomeY"></select></div>
+            </div>
+            <div class="spacer"></div>
+            <div class="row">
+              <div><label>Age group (Y)</label><select id="ageY"></select></div>
+              <div><label>Year (Y, relative)</label><select id="yearY"></select></div>
+            </div>
+          </div>
+        </details>
+
+        <div class="spacer"></div>
+        <button id="resetBtn4" type="button">Reset</button>
+        <div id="scatterInfo" class="small" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <div id="scatter4" style="width:100%;height:580px;"></div>
+        <div class="small">Marker size reflects n (geometric mean of n on X and Y). Hover shows values for both series.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3 -->
+  <div id="tab3" class="tabpane">
+    <div class="grid">
+      <div class="card">
+        <div id="status3" class="status">Loading graph…</div>
+        <div class="small">Pick a disease, then show outgoing or incoming edges (directed, weighted).</div>
+
+        <div class="spacer"></div>
+
+        <label>Select disease (single)</label>
+        <div class="dd">
+          <button class="ddbtn" id="btn-disease3" type="button">Select a disease…</button>
+          <div class="panel" id="panel-disease3"></div>
+        </div>
+        <input type="hidden" id="disease3" />
+
+        <div class="spacer"></div>
+
+        <div class="row">
+          <button id="outBtn3" type="button">Show outgoing</button>
+          <button id="inBtn3" type="button">Show incoming</button>
+        </div>
+
+        <div class="spacer"></div>
+        <div id="graphInfo3" class="small"></div>
+      </div>
+
+      <div class="card">
+        <div id="graph3"></div>
+        <div class="small">Hover edges for ΔP(T+1) in percentage points; line width reflects |link_strength|.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // Expected effects_v3.csv columns:
+  // disease_group, disease_id, disease, outcome, income, sex, age_group, het_group_id, rel_year, estimate, ci_low, ci_high, p_value, n
+  //
+  // Expected disease_links_with_names.csv columns:
+  // disease_id_from,disease_id_to,link_strength,disease_from,group_from,disease_to,group_to
+
+  let rows = [];
+  let effectsIndex = new Map(); // key -> row
+
+  // ---------- shared helpers ----------
+  function uniq(arr) { return [...new Set(arr)].sort((a,b) => (a > b) ? 1 : (a < b) ? -1 : 0); }
+  function $(id) { return document.getElementById(id); }
+  function toFixed3(x) { return Number(x).toFixed(3); }
+  function exp2(x) { return Number(x).toExponential(2); }
+
+  function idxKey(disease_id, outcome, sex, age_group, income, rel_year) {
+    return `${disease_id}||${outcome}||${sex}||${age_group}||${income}||${rel_year}`;
+  }
+
+  // ---------- Tabs ----------
+  function showTab(which) {
+    $("tab1").classList.toggle("active", which === 1);
+    $("tab2").classList.toggle("active", which === 2);
+    $("tab3").classList.toggle("active", which === 3);
+    $("tab4").classList.toggle("active", which === 4);
+
+    $("tab1btn").classList.toggle("active", which === 1);
+    $("tab2btn").classList.toggle("active", which === 2);
+    $("tab3btn").classList.toggle("active", which === 3);
+    $("tab4btn").classList.toggle("active", which === 4);
+  }
+  $("tab1btn").onclick = () => showTab(1);
+  $("tab2btn").onclick = () => showTab(2);
+  $("tab3btn").onclick = () => showTab(3);
+  $("tab4btn").onclick = () => showTab(4);
+
+  // ---------- Dropdown logic ----------
+  function product(arrays) {
+    return arrays.reduce((acc, curr) => {
+      const out = [];
+      acc.forEach(a => curr.forEach(b => out.push(a.concat([b]))));
+      return out;
+    }, [[]]);
+  }
+
+  function closeAllPanels() {
+    document.querySelectorAll(".panel.open").forEach(p => p.classList.remove("open"));
+  }
+
+  document.addEventListener("click", (e) => {
+    const dd = e.target.closest(".dd");
+    if (!dd) closeAllPanels();
+  });
+
+  function togglePanel(panelId) {
+    const panel = $(panelId);
+    const isOpen = panel.classList.contains("open");
+    closeAllPanels();
+    if (!isOpen) panel.classList.add("open");
+  }
+
+  function updateButtonLabel(btnId, selectedLabels, placeholder, max=2) {
+    const btn = $(btnId);
+    const n = selectedLabels.length;
+    if (n === 0) btn.textContent = placeholder;
+    else if (n === 1) btn.textContent = selectedLabels[0];
+    else btn.textContent = `${selectedLabels[0]} + ${n-1} (max ${max})`;
+  }
+
+  function syncDisabledStates(panelId, selectedSet, max=2) {
+    const panel = $(panelId);
+    const reached = selectedSet.size >= max;
+    panel.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      const checked = cb.checked;
+      cb.disabled = reached && !checked;
+      cb.parentElement.classList.toggle("disabled", cb.disabled);
+    });
+  }
+
+  function buildFlatChecklist({ panelId, btnId, values, selectedSet, max=2, placeholder="Select up to 2…" }) {
+    const panel = $(panelId);
+    panel.innerHTML = "";
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const pill = document.createElement("span");
+    pill.className = "pill";
+    pill.textContent = `max ${max}`;
+
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.textContent = "Clear";
+    clearBtn.style.padding = "6px 8px";
+    clearBtn.onclick = () => {
+      selectedSet.clear();
+      syncDisabledStates(panelId, selectedSet, max);
+      syncLabelsAndRender1();
+    };
+
+    actions.appendChild(pill);
+    actions.appendChild(clearBtn);
+    panel.appendChild(actions);
+
+    values.forEach(v => {
+      const row = document.createElement("div");
+      row.className = "item";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = v;
+      cb.checked = selectedSet.has(v);
+      cb.onchange = () => {
+        if (cb.checked) {
+          if (selectedSet.size >= max) { cb.checked = false; return; }
+          selectedSet.add(v);
+        } else selectedSet.delete(v);
+
+        syncDisabledStates(panelId, selectedSet, max);
+        syncLabelsAndRender1();
+      };
+
+      const label = document.createElement("label");
+      label.style.margin = "0";
+      label.textContent = v;
+
+      row.appendChild(cb);
+      row.appendChild(label);
+      panel.appendChild(row);
+    });
+
+    $(btnId).onclick = (e) => { e.stopPropagation(); togglePanel(panelId); };
+    syncDisabledStates(panelId, selectedSet, max);
+    updateButtonLabel(btnId, [...selectedSet], placeholder, max);
+  }
+
+  function buildHierarchicalDiseaseChecklist({ panelId, btnId, groupsToDiseases, diseaseMetaById, selectedSet, max=2 }) {
+    const panel = $(panelId);
+    panel.innerHTML = "";
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const search = document.createElement("input");
+    search.type = "text";
+    search.placeholder = "Search disease…";
+
+    const pill = document.createElement("span");
+    pill.className = "pill";
+    pill.textContent = `max ${max}`;
+
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.textContent = "Clear";
+    clearBtn.style.padding = "6px 8px";
+    clearBtn.onclick = () => {
+      selectedSet.clear();
+      syncDisabledStates(panelId, selectedSet, max);
+      syncLabelsAndRender1();
+    };
+
+    actions.appendChild(search);
+    actions.appendChild(pill);
+    actions.appendChild(clearBtn);
+    panel.appendChild(actions);
+
+    const container = document.createElement("div");
+    panel.appendChild(container);
+
+    function renderList(filterText="") {
+      container.innerHTML = "";
+      const q = filterText.trim().toLowerCase();
+
+      Object.keys(groupsToDiseases).sort().forEach(groupName => {
+        const diseaseIds = groupsToDiseases[groupName];
+        const visible = q
+          ? diseaseIds.filter(id => diseaseMetaById[id].disease.toLowerCase().includes(q))
+          : diseaseIds.slice();
+        if (q && visible.length === 0) return;
+
+        const details = document.createElement("details");
+        if (q) details.open = true;
+
+        const summary = document.createElement("summary");
+        summary.textContent = groupName;
+        details.appendChild(summary);
+
+        const list = document.createElement("div");
+        list.className = "indent";
+
+        visible.forEach(id => {
+          const meta = diseaseMetaById[id];
+
+          const row = document.createElement("div");
+          row.className = "item";
+
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.value = id;
+          cb.checked = selectedSet.has(id);
+          cb.onchange = () => {
+            if (cb.checked) {
+              if (selectedSet.size >= max) { cb.checked = false; return; }
+              selectedSet.add(id);
+            } else selectedSet.delete(id);
+
+            syncDisabledStates(panelId, selectedSet, max);
+            syncLabelsAndRender1();
+          };
+
+          const label = document.createElement("label");
+          label.style.margin = "0";
+          label.textContent = meta.disease;
+
+          row.appendChild(cb);
+          row.appendChild(label);
+          list.appendChild(row);
+        });
+
+        details.appendChild(list);
+        container.appendChild(details);
+      });
+
+      syncDisabledStates(panelId, selectedSet, max);
+    }
+
+    search.addEventListener("input", () => renderList(search.value));
+    renderList("");
+
+    $(btnId).onclick = (e) => { e.stopPropagation(); togglePanel(panelId); };
+
+    const labels = [...selectedSet].map(id => diseaseMetaById[id]?.disease || id);
+    updateButtonLabel(btnId, labels, "Select up to 2…", max);
+  }
+
+  // Single-select hierarchical dropdown (Tab 3)
+  function buildHierarchicalSingleSelect({ panelId, btnId, groupsToIds, idToLabel, onSelect, placeholder="Select a disease…" }) {
+    const panel = $(panelId);
+    panel.innerHTML = "";
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const search = document.createElement("input");
+    search.type = "text";
+    search.placeholder = "Search disease…";
+
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.textContent = "Clear";
+    clearBtn.style.padding = "6px 8px";
+    clearBtn.onclick = () => {
+      onSelect(null);
+      $(btnId).textContent = placeholder;
+      search.value = "";
+      renderList("");
+    };
+
+    actions.appendChild(search);
+    actions.appendChild(clearBtn);
+    panel.appendChild(actions);
+
+    const container = document.createElement("div");
+    panel.appendChild(container);
+
+    function renderList(qRaw) {
+      container.innerHTML = "";
+      const q = (qRaw || "").trim().toLowerCase();
+
+      Object.keys(groupsToIds).sort().forEach(g => {
+        const ids = groupsToIds[g];
+        const visible = q ? ids.filter(id => (idToLabel[id] || id).toLowerCase().includes(q)) : ids.slice();
+        if (q && visible.length === 0) return;
+
+        const details = document.createElement("details");
+        if (q) details.open = true;
+
+        const summary = document.createElement("summary");
+        summary.textContent = g;
+        details.appendChild(summary);
+
+        const list = document.createElement("div");
+        list.className = "indent";
+
+        visible.forEach(id => {
+          const row = document.createElement("div");
+          row.className = "item";
+
+          const radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = "disease3radio";
+          radio.value = id;
+          radio.onchange = () => {
+            onSelect(id);
+            $(btnId).textContent = idToLabel[id] || id;
+            $(panelId).classList.remove("open");
+          };
+
+          const label = document.createElement("label");
+          label.style.margin = "0";
+          label.textContent = idToLabel[id] || id;
+
+          row.appendChild(radio);
+          row.appendChild(label);
+          list.appendChild(row);
+        });
+
+        details.appendChild(list);
+        container.appendChild(details);
+      });
+    }
+
+    search.addEventListener("input", () => renderList(search.value));
+    renderList("");
+
+    $(btnId).onclick = (e) => { e.stopPropagation(); togglePanel(panelId); };
+    $(btnId).textContent = placeholder;
+  }
+
+  // ---------- Tab 1 state + rendering ----------
+  const state = { diseases: new Set(), sexes: new Set(), ages: new Set(), incomes: new Set() };
+  let __diseaseMetaById = null;
+  let __groupsToDiseases = null;
+
+  function setStatus1(msg) { $("status1").textContent = msg; }
+
+  function syncLabelsAndRender1() {
+    const dLabels = [...state.diseases].map(id => __diseaseMetaById?.[id]?.disease || id);
+    updateButtonLabel("btn-disease", dLabels, "Select up to 2…", 2);
+    updateButtonLabel("btn-sex", [...state.sexes], "Select up to 2…", 2);
+    updateButtonLabel("btn-age", [...state.ages], "Select up to 2…", 2);
+    updateButtonLabel("btn-income", [...state.incomes], "Select up to 2…", 2);
+    renderExplorer();
+  }
+
+  function renderExplorer() {
+    if (!rows.length) return;
+
+    const outcome = $("outcome1").value;
+    const diseases = [...state.diseases];
+    const sexes = [...state.sexes];
+    const ages = [...state.ages];
+    const incomes = [...state.incomes];
+
+    if (!diseases.length || !sexes.length || !ages.length || !incomes.length) {
+      Plotly.newPlot("chart", [], { title: "Select at least 1 disease, sex, age, and income" }, {responsive:true});
+      $("lineInfo").textContent = "";
+      return;
+    }
+
+    const combos = product([diseases, sexes, ages, incomes]);
+    $("lineInfo").textContent = `Target lines: ${combos.length} (max 16)`;
+
+    const base = rows.filter(r => r.outcome === outcome);
+    const traces = [];
+    let found = 0;
+
+    for (const [did, sex, age, income] of combos) {
+      const s = base
+        .filter(r => r.disease_id === did && r.sex === sex && r.age_group === age && r.income === income)
+        .sort((a,b) => a.rel_year - b.rel_year);
+
+      if (!s.length) continue;
+      found += 1;
+
+      const diseaseName = __diseaseMetaById?.[did]?.disease || did;
+
+      traces.push({
+        type: "scatter",
+        mode: "lines+markers",
+        name: `${diseaseName} | ${sex} | ${age} | ${income}`,
+        x: s.map(r => r.rel_year),
+        y: s.map(r => r.estimate),
+        text: s.map(r =>
+          `Disease: ${diseaseName}<br>` +
+          `Outcome: ${r.outcome}<br>` +
+          `Sex: ${r.sex}, Age: ${r.age_group}, Income: ${r.income}<br>` +
+          `Year: ${r.rel_year}<br>` +
+          `Estimate: ${toFixed3(r.estimate)}<br>` +
+          `95% CI: [${toFixed3(r.ci_low)}, ${toFixed3(r.ci_high)}]<br>` +
+          `p: ${exp2(r.p_value)}<br>` +
+          `n: ${r.n}`
+        ),
+        hoverinfo: "text"
+      });
+    }
+
+    if (!traces.length) {
+      Plotly.newPlot("chart", [], { title: "No data for selected combinations" }, {responsive:true});
+      setStatus1(`Loaded ${rows.length.toLocaleString()} rows. No matching series.`);
+      return;
+    }
+
+    Plotly.newPlot("chart", traces, {
+      title: `${outcome} — ${found} line(s)`,
+      xaxis: { title: "Years relative to baseline", dtick: 1 },
+      yaxis: { title: "Effect estimate", zeroline: true },
+      margin: {l: 60, r: 20, t: 55, b: 55},
+      legend: { orientation: "h" }
+    }, {responsive: true});
+
+    setStatus1(`Loaded ${rows.length.toLocaleString()} rows. Rendering ${found} series.`);
+  }
+
+  // ---------- Tab 2: ranking ----------
+  function setStatus2(msg) { $("status2").textContent = msg; }
+
+  function renderRank() {
+    if (!rows.length) return;
+
+    const outcome = $("outcome2").value;
+    const sex = $("sex2").value;
+    const income = $("income2").value;
+    const age = $("age2").value;
+    const year = Number($("year2").value);
+    const sort = $("sort2").value;
+    const topN = Number($("top2").value);
+    const weightN = $("weightN2") ? $("weightN2").checked : false;
+
+    const slice = rows.filter(r =>
+      r.outcome === outcome &&
+      r.sex === sex &&
+      r.income === income &&
+      r.age_group === age &&
+      r.rel_year === year
+    );
+
+    const byDisease = new Map();
+    for (const r of slice) if (!byDisease.has(r.disease_id)) byDisease.set(r.disease_id, r);
+
+    let list = Array.from(byDisease.values());
+// rank on estimate, or (optionally) n * estimate
+const score = (r) => (weightN ? (Number(r.n) * Number(r.estimate)) : Number(r.estimate));
+
+list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)));
+    if (topN !== 300) list = list.slice(0, topN);
+
+    const body = $("rankBody");
+    body.innerHTML = "";
+
+    for (const r of list) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.disease_group}</td>
+        <td>${r.disease}</td>
+        <td class="right">${toFixed3(r.estimate)}</td>
+        <td class="right">${toFixed3(r.ci_low)}</td>
+        <td class="right">${toFixed3(r.ci_high)}</td>
+        <td class="right">${exp2(r.p_value)}</td>
+        <td class="right">${r.n}</td>
+      `;
+      body.appendChild(tr);
+    }
+
+    $("rankInfo").textContent =
+      `Slice: ${outcome} | ${sex} | ${age} | ${income} | year ${year}. ` +
+      `Ranking by ${weightN ? "n×estimate" : "estimate"}. ` +
+      `Showing ${list.length} of ${byDisease.size} diseases.`;
+    setStatus2(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+  }
+
+  // ---------- Tab 4: scatter (Option B) ----------
+  function setStatus4(msg) { $("status4").textContent = msg; }
+
+  function getIndexedRow({ disease_id, outcome, sex, age_group, income, rel_year }) {
+    return effectsIndex.get(idxKey(disease_id, outcome, sex, age_group, income, rel_year));
+  }
+
+  function renderScatter() {
+    if (!rows.length) return;
+
+    const weightN = $("weightN4") ? $("weightN4").checked : false;
+
+    const specX = {
+      outcome: $("outcomeX").value,
+      sex: $("sexX").value,
+      age_group: $("ageX").value,
+      income: $("incomeX").value,
+      rel_year: Number($("yearX").value)
+    };
+    const specY = {
+      outcome: $("outcomeY").value,
+      sex: $("sexY").value,
+      age_group: $("ageY").value,
+      income: $("incomeY").value,
+      rel_year: Number($("yearY").value)
+    };
+
+    const diseaseIds = Object.keys(__diseaseMetaById || {});
+    const xs = [], ys = [], sizes = [], texts = [], labels = [];
+    let excluded = 0;
+    let maxN = 1;
+
+    // First pass: gather points and max n
+    const tmp = [];
+    for (const did of diseaseIds) {
+      const rx = getIndexedRow({ disease_id: did, ...specX });
+      const ry = getIndexedRow({ disease_id: did, ...specY });
+      if (!rx || !ry) { excluded++; continue; }
+
+      const xv = weightN ? (Number(rx.n) * Number(rx.estimate)) : Number(rx.estimate);
+      const yv = weightN ? (Number(ry.n) * Number(ry.estimate)) : Number(ry.estimate);
+
+      // If estimate is missing/NaN treat as missing
+      if (!Number.isFinite(xv) || !Number.isFinite(yv)) { excluded++; continue; }
+
+      const nx = Number(rx.n);
+      const ny = Number(ry.n);
+      const nGeom = (Number.isFinite(nx) && Number.isFinite(ny) && nx > 0 && ny > 0) ? Math.sqrt(nx * ny) : (Number.isFinite(nx) && nx > 0 ? nx : (Number.isFinite(ny) && ny > 0 ? ny : 1));
+      if (Number.isFinite(nGeom) && nGeom > maxN) maxN = nGeom;
+
+      tmp.push({ did, rx, ry, xv, yv, nGeom });
+    }
+
+    for (const p of tmp) {
+      const meta = __diseaseMetaById[p.did] || { disease: p.did, disease_group: "" };
+      xs.push(p.xv);
+      ys.push(p.yv);
+      labels.push(meta.disease);
+      const s = 6 + 18 * (Math.sqrt(Math.max(1, p.nGeom)) / Math.sqrt(Math.max(1, maxN)));
+      sizes.push(s);
+
+      texts.push(
+        `<b>${meta.disease}</b><br>` +
+        `${meta.disease_group ? `Group: ${meta.disease_group}<br>` : ""}` +
+        `<br><b>X</b>: ${specX.outcome} | ${specX.sex}, ${specX.age_group}, ${specX.income}, year ${specX.rel_year}<br>` +
+        `estimate: ${toFixed3(p.rx.estimate)}${weightN ? ` (n×est: ${toFixed3(Number(p.rx.n) * Number(p.rx.estimate))})` : ""}<br>` +
+        `CI: [${toFixed3(p.rx.ci_low)}, ${toFixed3(p.rx.ci_high)}], p: ${exp2(p.rx.p_value)}, n: ${p.rx.n}<br>` +
+        `<br><b>Y</b>: ${specY.outcome} | ${specY.sex}, ${specY.age_group}, ${specY.income}, year ${specY.rel_year}<br>` +
+        `estimate: ${toFixed3(p.ry.estimate)}${weightN ? ` (n×est: ${toFixed3(Number(p.ry.n) * Number(p.ry.estimate))})` : ""}<br>` +
+        `CI: [${toFixed3(p.ry.ci_low)}, ${toFixed3(p.ry.ci_high)}], p: ${exp2(p.ry.p_value)}, n: ${p.ry.n}`
+      );
+    }
+
+    if (!tmp.length) {
+      Plotly.newPlot("scatter4", [], { title: "No overlapping diseases for selected X/Y series" }, { responsive: true });
+      $("scatterInfo").textContent = `No points to plot. Excluded ${excluded.toLocaleString()} diseases due to missing X or Y.`;
+      setStatus4(`Loaded ${rows.length.toLocaleString()} rows. No overlapping points.`);
+      return;
+    }
+
+    const trace = {
+      type: "scatter",
+      mode: "markers",
+      x: xs,
+      y: ys,
+      text: texts,
+      hoverinfo: "text",
+      marker: {
+        size: sizes,
+        opacity: 0.8
+      }
+    };
+
+    const xTitle = `${specX.outcome} (${specX.sex}, ${specX.age_group}, ${specX.income}, year ${specX.rel_year})${weightN ? " — n×estimate" : " — estimate"}`;
+    const yTitle = `${specY.outcome} (${specY.sex}, ${specY.age_group}, ${specY.income}, year ${specY.rel_year})${weightN ? " — n×estimate" : " — estimate"}`;
+
+    Plotly.newPlot("scatter4", [trace], {
+      title: `Diseases: ${tmp.length.toLocaleString()} point(s)`,
+      xaxis: { title: xTitle, zeroline: true },
+      yaxis: { title: yTitle, zeroline: true },
+      margin: { l: 70, r: 20, t: 55, b: 70 },
+      hovermode: "closest"
+    }, { responsive: true });
+
+    $("scatterInfo").textContent =
+      `Plotted ${tmp.length.toLocaleString()} diseases. Excluded ${excluded.toLocaleString()} (missing X or Y). ` +
+      `Values shown are ${weightN ? "n×estimate" : "estimate"}.`;
+    setStatus4(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+  }
+
+  // ---------- Tab 3: disease graph ----------
+  let links = [];
+  let outAdj = new Map(); // disease_id -> [{to, w}]
+  let inAdj  = new Map(); // disease_id -> [{from, w}]
+
+  function setStatus3(msg) { $("status3").textContent = msg; }
+
+  async function loadLinks() {
+    const resp = await fetch("./disease_links_with_names.csv?cb=1");
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} (disease_links_with_names.csv)`);
+
+    const text = await resp.text();
+    const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
+    links = parsed.data;
+
+    outAdj = new Map();
+    inAdj = new Map();
+
+    for (const e of links) {
+      const src = e.disease_id_from;
+      const dst = e.disease_id_to;
+      const w = Number(e.link_strength);
+      if (!outAdj.has(src)) outAdj.set(src, []);
+      if (!inAdj.has(dst)) inAdj.set(dst, []);
+      outAdj.get(src).push({ to: dst, w });
+      inAdj.get(dst).push({ from: src, w });
+    }
+
+    setStatus3(`Loaded ${links.length.toLocaleString()} edges. Ready.`);
+  }
+
+  function initTab3() {
+    const groupsToIds = {};
+    const idToLabel = {};
+
+    Object.values(__diseaseMetaById).forEach(m => {
+      idToLabel[m.disease_id] = m.disease;
+      if (!groupsToIds[m.disease_group]) groupsToIds[m.disease_group] = [];
+      groupsToIds[m.disease_group].push(m.disease_id);
+    });
+
+    Object.keys(groupsToIds).forEach(g => {
+      groupsToIds[g].sort((a,b) => (idToLabel[a] || a).localeCompare(idToLabel[b] || b));
+    });
+
+    const allIds = Object.keys(idToLabel).sort((a,b) => (idToLabel[a] || a).localeCompare(idToLabel[b] || b));
+    const defaultId = allIds[0];
+
+    $("disease3").value = defaultId;
+    $("btn-disease3").textContent = idToLabel[defaultId];
+
+    buildHierarchicalSingleSelect({
+      panelId: "panel-disease3",
+      btnId: "btn-disease3",
+      groupsToIds,
+      idToLabel,
+      onSelect: (id) => { $("disease3").value = id || ""; }
+    });
+
+    $("outBtn3").onclick = () => renderGraphForSelection("out");
+    $("inBtn3").onclick = () => renderGraphForSelection("in");
+
+    $("graphInfo3").textContent = "Select a disease and click a button.";
+  }
+
+  async function loadData() {
+    try {
+      const resp = await fetch("./effects_v3.csv?cb=1");
+      if (!resp.ok) throw new Error(`HTTP ${resp.status} (effects_v3.csv)`);
+      const text = await resp.text();
+
+      const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
+      rows = parsed.data;
+
+      // Build fast index for (disease_id, outcome, sex, age_group, income, rel_year)
+      effectsIndex = new Map();
+      for (const r of rows) {
+        const k = idxKey(r.disease_id, r.outcome, r.sex, r.age_group, r.income, r.rel_year);
+        // Keep first occurrence if duplicates exist
+        if (!effectsIndex.has(k)) effectsIndex.set(k, r);
+      }
+
+      const needed = ["disease_group","disease_id","disease","outcome","income","sex","age_group","rel_year","estimate","ci_low","ci_high","p_value","n"];
+      const missing = needed.filter(k => !(k in (rows[0] || {})));
+      if (missing.length) {
+        setStatus1("effects_v3.csv missing columns: " + missing.join(", "));
+        setStatus2("effects_v3.csv missing columns: " + missing.join(", "));
+        setStatus3("effects_v3.csv missing columns: " + missing.join(", "));
+        Plotly.newPlot("chart", [], { title: "Fix CSV schema (missing columns)" }, {responsive:true});
+        Plotly.newPlot("graph3", [], { title: "Fix CSV schema (missing columns)" }, {responsive:true});
+        return;
+      }
+
+      const outcomeVals = uniq(rows.map(r => r.outcome));
+      const sexVals = uniq(rows.map(r => r.sex));
+      const ageVals = uniq(rows.map(r => r.age_group));
+      const incomeVals = uniq(rows.map(r => r.income));
+      const yearVals = uniq(rows.map(r => r.rel_year)).sort((a,b)=>a-b);
+
+      // ---- Tab 1 outcome ----
+      $("outcome1").innerHTML = "";
+      outcomeVals.forEach((v,i) => {
+        const opt = document.createElement("option");
+        opt.value = v; opt.textContent = v;
+        if (i === 0) opt.selected = true;
+        $("outcome1").appendChild(opt);
+      });
+      $("outcome1").addEventListener("change", renderExplorer);
+
+      // disease meta/hierarchy from effects_v3.csv
+      __diseaseMetaById = {};
+      rows.forEach(r => {
+        if (!__diseaseMetaById[r.disease_id]) {
+          __diseaseMetaById[r.disease_id] = { disease_id: r.disease_id, disease: r.disease, disease_group: r.disease_group };
+        }
+      });
+
+      __groupsToDiseases = {};
+      Object.values(__diseaseMetaById).forEach(m => {
+        if (!__groupsToDiseases[m.disease_group]) __groupsToDiseases[m.disease_group] = [];
+        __groupsToDiseases[m.disease_group].push(m.disease_id);
+      });
+      Object.keys(__groupsToDiseases).forEach(g => {
+        __groupsToDiseases[g].sort((a,b) => __diseaseMetaById[a].disease.localeCompare(__diseaseMetaById[b].disease));
+      });
+
+      const orderedDiseaseIds = Object.keys(__diseaseMetaById).sort((a,b) => {
+        const ga = __diseaseMetaById[a].disease_group, gb = __diseaseMetaById[b].disease_group;
+        if (ga !== gb) return ga.localeCompare(gb);
+        return __diseaseMetaById[a].disease.localeCompare(__diseaseMetaById[b].disease);
+      });
+
+      // defaults
+      state.diseases = new Set([orderedDiseaseIds[0]]);
+      state.sexes = new Set(sexVals.slice(0,2));
+      state.ages = new Set(ageVals.slice(0,2));
+      state.incomes = new Set(incomeVals.slice(0,2));
+
+      buildHierarchicalDiseaseChecklist({
+        panelId: "panel-disease",
+        btnId: "btn-disease",
+        groupsToDiseases: __groupsToDiseases,
+        diseaseMetaById: __diseaseMetaById,
+        selectedSet: state.diseases,
+        max: 2
+      });
+      buildFlatChecklist({ panelId: "panel-sex", btnId: "btn-sex", values: sexVals, selectedSet: state.sexes, max: 2 });
+      buildFlatChecklist({ panelId: "panel-age", btnId: "btn-age", values: ageVals, selectedSet: state.ages, max: 2 });
+      buildFlatChecklist({ panelId: "panel-income", btnId: "btn-income", values: incomeVals, selectedSet: state.incomes, max: 2 });
+
+      $("resetBtn1").onclick = () => {
+        state.diseases = new Set([orderedDiseaseIds[0]]);
+        state.sexes = new Set(sexVals.slice(0,2));
+        state.ages = new Set(ageVals.slice(0,2));
+        state.incomes = new Set(incomeVals.slice(0,2));
+
+        buildHierarchicalDiseaseChecklist({
+          panelId: "panel-disease",
+          btnId: "btn-disease",
+          groupsToDiseases: __groupsToDiseases,
+          diseaseMetaById: __diseaseMetaById,
+          selectedSet: state.diseases,
+          max: 2
+        });
+        buildFlatChecklist({ panelId: "panel-sex", btnId: "btn-sex", values: sexVals, selectedSet: state.sexes, max: 2 });
+        buildFlatChecklist({ panelId: "panel-age", btnId: "btn-age", values: ageVals, selectedSet: state.ages, max: 2 });
+        buildFlatChecklist({ panelId: "panel-income", btnId: "btn-income", values: incomeVals, selectedSet: state.incomes, max: 2 });
+
+        syncLabelsAndRender1();
+      };
+
+      setStatus1(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+      syncLabelsAndRender1();
+
+      // ---- Tab 2 controls ----
+      function fillSelect(id, values) {
+        const sel = $(id);
+        sel.innerHTML = "";
+        values.forEach((v,i) => {
+          const opt = document.createElement("option");
+          opt.value = v; opt.textContent = v;
+          if (i === 0) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+      fillSelect("outcome2", outcomeVals);
+      fillSelect("sex2", sexVals);
+      fillSelect("income2", incomeVals);
+      fillSelect("age2", ageVals);
+      fillSelect("year2", yearVals);
+      if (yearVals.includes(0)) $("year2").value = "0";
+
+      ["outcome2","sex2","income2","age2","year2","sort2","top2","weightN2"].forEach(id => {
+        $(id).addEventListener("change", renderRank);
+      });
+
+      $("resetBtn2").onclick = () => {
+        $("outcome2").selectedIndex = 0;
+        $("sex2").selectedIndex = 0;
+        $("income2").selectedIndex = 0;
+        $("age2").selectedIndex = 0;
+        $("year2").value = yearVals.includes(0) ? "0" : String(yearVals[0]);
+        $("sort2").value = "desc";
+        $("top2").value = "50";
+        if ($("weightN2")) $("weightN2").checked = false;
+        renderRank();
+      };
+
+      setStatus2(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+      renderRank();
+
+      // ---- Tab 4 controls (Scatter: Option B) ----
+      function fillSelect4(id, values) {
+        const sel = $(id);
+        if (!sel) return;
+        sel.innerHTML = "";
+        values.forEach((v,i) => {
+          const opt = document.createElement("option");
+          opt.value = v; opt.textContent = v;
+          if (i === 0) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      }
+
+      // Fill X/Y series selectors
+      fillSelect4("outcomeX", outcomeVals);
+      fillSelect4("sexX", sexVals);
+      fillSelect4("ageX", ageVals);
+      fillSelect4("incomeX", incomeVals);
+      fillSelect4("yearX", yearVals);
+
+      fillSelect4("outcomeY", outcomeVals);
+      fillSelect4("sexY", sexVals);
+      fillSelect4("ageY", ageVals);
+      fillSelect4("incomeY", incomeVals);
+      fillSelect4("yearY", yearVals);
+
+      // Defaults: year 0 if present; outcomeY second if possible
+      if (yearVals.includes(0)) {
+        if ($("yearX")) $("yearX").value = "0";
+        if ($("yearY")) $("yearY").value = "0";
+      }
+      if (outcomeVals.length > 1) {
+        if ($("outcomeY")) $("outcomeY").value = outcomeVals[1];
+      }
+
+      ["weightN4","outcomeX","sexX","ageX","incomeX","yearX","outcomeY","sexY","ageY","incomeY","yearY"].forEach(id => {
+        const el = $(id);
+        if (el) el.addEventListener("change", renderScatter);
+      });
+
+      $("resetBtn4").onclick = () => {
+        if ($("weightN4")) $("weightN4").checked = false;
+
+        if ($("outcomeX")) $("outcomeX").selectedIndex = 0;
+        if ($("sexX")) $("sexX").selectedIndex = 0;
+        if ($("ageX")) $("ageX").selectedIndex = 0;
+        if ($("incomeX")) $("incomeX").selectedIndex = 0;
+        if ($("yearX")) $("yearX").value = yearVals.includes(0) ? "0" : String(yearVals[0]);
+
+        if ($("outcomeY")) $("outcomeY").value = (outcomeVals.length > 1 ? outcomeVals[1] : outcomeVals[0]);
+        if ($("sexY")) $("sexY").selectedIndex = 0;
+        if ($("ageY")) $("ageY").selectedIndex = 0;
+        if ($("incomeY")) $("incomeY").selectedIndex = 0;
+        if ($("yearY")) $("yearY").value = yearVals.includes(0) ? "0" : String(yearVals[0]);
+
+        renderScatter();
+      };
+
+      setStatus4(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+      renderScatter();
+
+      // ---- Tab 3 controls ----
+      await loadLinks();
+      initTab3();
+    } catch (e) {
+      console.error(e);
+      setStatus1("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
+      setStatus2("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
+      setStatus3("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
+      setStatus4("Failed to load files. Use GitHub Pages URL and ensure effects_v3.csv + disease_links_with_names.csv exist.");
+      Plotly.newPlot("chart", [], { title: "Data load failed" }, {responsive:true});
+      Plotly.newPlot("scatter4", [], { title: "Data load failed" }, {responsive:true});
+      Plotly.newPlot("graph3", [], { title: "Data load failed" }, {responsive:true});
+    }
+  }
+
+  loadData();
+  </script>
+</body>
+</html>
