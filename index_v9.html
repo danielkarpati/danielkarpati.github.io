@@ -1327,7 +1327,154 @@ function initPersonYears(sexVals, ageVals, incomeVals) {
     $("graphInfo3").textContent = "Select a disease and click a button.";
   }
 
-  async function loadData() {
+  
+
+  function renderGraphForSelection(direction) {
+      const center = $("disease3").value;
+      if (!center) {
+        $("graphInfo3").textContent = "Select a disease first.";
+        Plotly.newPlot("graph3", [], { title: "No disease selected" }, {responsive:true});
+        return;
+      }
+  
+      const centerName = __diseaseMetaById?.[center]?.disease || center;
+  
+      let edges = [];
+      if (direction === "out") {
+        edges = (outAdj.get(center) || []).map(e => ({ source: center, target: e.to, w: e.w }));
+      } else {
+        edges = (inAdj.get(center) || []).map(e => ({ source: e.from, target: center, w: e.w }));
+      }
+  
+      if (!edges.length) {
+        $("graphInfo3").textContent = `No ${direction === "out" ? "outgoing" : "incoming"} edges for ${centerName}.`;
+        Plotly.newPlot("graph3", [], { title: "No edges to display" }, {responsive:true});
+        return;
+      }
+  
+  
+  
+  
+  const nodeIds = new Set([center]);
+  edges.forEach(e => { nodeIds.add(e.source); nodeIds.add(e.target); });
+  const nodes = [...nodeIds];
+  
+  // --- Layout: center disease in the middle, neighbors on a circle ---
+  const neighbors = nodes.filter(id => id !== center).sort();
+  const m = neighbors.length;
+  
+  const pos = {};
+  pos[center] = { x: 0, y: 0 };
+  
+  neighbors.forEach((id, i) => {
+    const a = 2 * Math.PI * i / Math.max(m, 1);
+    const R = 1.0;
+    pos[id] = { x: R * Math.cos(a), y: R * Math.sin(a) };
+  });
+  
+  // --- Edges: single color, hover shows link strength ---
+  const wAbs = edges.map(e => Math.abs(e.w));
+  const wMax = Math.max(...wAbs, 1e-9);
+  
+  const edgeTraces = [];
+  const hoverX = [];
+  const hoverY = [];
+  const hoverText = [];
+  const annotations = [];
+  
+  edges.forEach(e => {
+    const x0 = pos[e.source].x, y0 = pos[e.source].y;
+    const x1 = pos[e.target].x, y1 = pos[e.target].y;
+  
+    const srcName = __diseaseMetaById?.[e.source]?.disease || e.source;
+    const dstName = __diseaseMetaById?.[e.target]?.disease || e.target;
+  
+    const width = 1 + 6 * (Math.abs(e.w) / wMax);
+  
+    // draw the line (no hover reliance here)
+    edgeTraces.push({
+      type: "scatter",
+      mode: "lines",
+      x: [x0, x1],
+      y: [y0, y1],
+      line: { width, color: "#333" },
+      hoverinfo: "skip"
+    });
+  
+    // midpoint hover marker (invisible but hoverable)
+    const mx = (x0 + x1) / 2;
+    const my = (y0 + y1) / 2;
+    hoverX.push(mx);
+    hoverY.push(my);
+    hoverText.push(`${srcName} → ${dstName}<br>Link strength: ${(e.w*100).toFixed(1)} pp`);
+  
+    // arrow annotation to show direction (source -> target)
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const L = Math.hypot(dx, dy) || 1;
+  
+    // put arrow head near the target but not exactly on top of the node
+    const backoff = 0.12; // tweak if arrows overlap labels
+    const ax = x1 - (dx / L) * backoff;
+    const ay = y1 - (dy / L) * backoff;
+  
+    annotations.push({
+      x: x1, y: y1,
+      ax: ax, ay: ay,
+      xref: "x", yref: "y",
+      axref: "x", ayref: "y",
+      showarrow: true,
+      arrowhead: 3,
+      arrowsize: 1,
+      arrowwidth: Math.max(1, width * 0.6),
+      arrowcolor: "#333"
+    });
+  });
+  
+  // invisible hover layer for links
+  const hoverTrace = {
+    type: "scatter",
+    mode: "markers",
+    x: hoverX,
+    y: hoverY,
+    marker: { size: 14, opacity: 0 },   // invisible
+    hoverinfo: "text",
+    text: hoverText
+  };
+  
+  
+  // --- Nodes: uniform circle size (no weighting) ---
+  const nodeTrace = {
+    type: "scatter",
+    mode: "markers+text",
+    x: nodes.map(id => pos[id].x),
+    y: nodes.map(id => pos[id].y),
+    text: nodes.map(id => (id === center ? centerName : (__diseaseMetaById?.[id]?.disease || id))),
+    textposition: "top center",
+    hoverinfo: "text",
+    hovertext: nodes.map(id => (__diseaseMetaById?.[id]?.disease || id)),
+    marker: { size: 14 }   // uniform size
+  };
+  
+  const title = direction === "out" ? `Outgoing edges from: ${centerName}` : `Incoming edges to: ${centerName}`;
+  
+  Plotly.newPlot("graph3", [...edgeTraces, hoverTrace, nodeTrace], {
+    title,
+    xaxis: { visible: false },
+    yaxis: { visible: false },
+    margin: { l: 10, r: 10, t: 50, b: 10 },
+    showlegend: false,
+    hovermode: "closest",
+    annotations
+  }, {responsive:true});
+  
+  
+      $("graphInfo3").textContent = `${edges.length} edge(s) shown. Hover lines for ΔP(T+1).`;
+    }
+  
+    // ---------- load + init ----------
+
+async function loadData() {
     try {
       const resp = await fetch("./effects_v3.csv?cb=1");
       if (!resp.ok) throw new Error(`HTTP ${resp.status} (effects_v3.csv)`);
