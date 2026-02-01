@@ -87,8 +87,6 @@
     /* Diagnoses tab */
     .diagWrap { display:grid; grid-template-columns: 1fr; gap: 12px; }
     @media (min-width: 980px) { .diagWrap { grid-template-columns: 1fr; } } /* list uses full width; drawer overlays */
-    /* The main dashboard uses a 430px left sidebar at >=980px. For Diagnoses we want a wider list panel. */
-    @media (min-width: 980px) { .diagGrid { grid-template-columns: 1fr; } }
     .diagSearch { width: 100%; padding: 8px 10px; border:1px solid #ccc; border-radius: 12px; }
     .diagGroup { border: 1px solid #eee; border-radius: 12px; padding: 8px 10px; }
     .diagGroup > summary { font-weight: 700; }
@@ -130,8 +128,8 @@
   </p>
 
   <div class="tabs">
-<button class="tabBtn active" data-tab="intro">Introduction</button>
-    <button id="tab1btn" class="tabbtn active" type="button">Effects explorer</button>
+    <button id="tab0btn" class="tabbtn active" type="button">Introduction</button>
+    <button id="tab1btn" class="tabbtn" type="button">Effects explorer</button>
     <button id="tab2btn" class="tabbtn" type="button">Rank diseases</button>
     <button id="tab4btn" class="tabbtn" type="button">Scatter</button>
     <button id="tab5btn" class="tabbtn" type="button">Diagnoses</button>
@@ -139,7 +137,36 @@
   </div>
 
   <!-- TAB 1 -->
-  <div id="tab1" class="tabpane active">
+  <div id="tab0" class="tabpane active">
+    <div class="card">
+      <h2 style="margin:0 0 8px 0;">Introduction</h2>
+      <p class="small" style="margin-top:0;">
+        This dashboard summarizes <b>absolute effects</b> (in decimals) of diagnoses on outcomes measured at specific
+        <b>relative years</b> after diagnosis (e.g., Dx+3).
+      </p>
+
+      <h3 style="margin:14px 0 6px 0;">Definitions</h3>
+      <ul class="small" style="margin-top:6px;">
+        <li><b>Outcome</b>: the endpoint being studied (e.g., disability uptake) at a given relative year.</li>
+        <li><b>Sex</b>: subgroup indicator (as coded in the data).</li>
+        <li><b>Age</b>: age-group category (as coded in the data; ordered age bands).</li>
+        <li><b>Income</b>: income-group category (as coded in the data; e.g., Low / Medium / High).</li>
+        <li><b>Relative year</b>: time since diagnosis in years (Dx+0, Dx+1, ...).</li>
+      </ul>
+
+      <h3 style="margin:14px 0 6px 0;">Tabs</h3>
+      <ul class="small" style="margin-top:6px;">
+        <li><b>Effects explorer</b>: explore estimates by outcome and subgroup slice.</li>
+        <li><b>Rank diseases</b>: rank diseases within a slice; includes an annualized cohort-entry burden column.</li>
+        <li><b>Scatter</b>: compare two series (outcome×slice) against each other across diseases.</li>
+        <li><b>Diagnoses</b>: browse diagnoses in a hierarchy and open details in a right-hand drawer.</li>
+        <li><b>Disease graph</b>: view incoming/outgoing links between diseases.</li>
+      </ul>
+    </div>
+  </div>
+
+
+  <div id="tab1" class="tabpane">
     <div class="grid">
       <div class="card">
         <div id="status1" class="status">Loading data…</div>
@@ -265,7 +292,8 @@
               <tr>
                 <th>Disease group</th>
                 <th>Disease</th>
-                <th class="right">Estimate</th><th title="estimate × n / 4.75">Cohort-entry annual burden</th>
+                <th class="right">Estimate</th>
+                <th class="right" title="estimate × n / 4.75">Cohort-entry annual burden</th>
                 <th class="right">CI low</th>
                 <th class="right">CI high</th>
                 <th class="right">p</th>
@@ -349,7 +377,7 @@
 
   <!-- TAB 5 -->
   <div id="tab5" class="tabpane">
-    <div class="grid diagGrid">
+    <div class="grid">
       <div class="card">
         <div id="status5" class="status">Loading diagnoses…</div>
         <div class="small">Search diagnoses; click a disease to open details.</div>
@@ -643,11 +671,14 @@
 
   // ---------- Tabs ----------
   function showTab(which) {
+    $("tab0").classList.toggle("active", which === 0);
     $("tab1").classList.toggle("active", which === 1);
     $("tab2").classList.toggle("active", which === 2);
     $("tab3").classList.toggle("active", which === 3);
     $("tab4").classList.toggle("active", which === 4);
     $("tab5").classList.toggle("active", which === 5);
+
+    $("tab0btn").classList.toggle("active", which === 0);
 
     $("tab1btn").classList.toggle("active", which === 1);
     $("tab2btn").classList.toggle("active", which === 2);
@@ -655,6 +686,7 @@
     $("tab4btn").classList.toggle("active", which === 4);
     $("tab5btn").classList.toggle("active", which === 5);
   }
+  $("tab0btn").onclick = () => showTab(0);
   $("tab1btn").onclick = () => showTab(1);
   $("tab2btn").onclick = () => showTab(2);
   $("tab3btn").onclick = () => showTab(3);
@@ -1071,6 +1103,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
         <td>${r.disease_group}</td>
         <td>${r.disease}</td>
         <td class="right">${toFixed3(r.estimate)}</td>
+        <td class="right">${toFixed3((Number(r.estimate) * Number(r.n)) / 4.75)}</td>
         <td class="right">${toFixed3(r.ci_low)}</td>
         <td class="right">${toFixed3(r.ci_high)}</td>
         <td class="right">${exp2(r.p_value)}</td>
