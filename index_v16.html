@@ -122,9 +122,9 @@
   </style>
 </head>
 <body>
-  <h2>effects_v9.csv dashboard (v14)</h2>
+  <h2>effects_v6.csv dashboard (v14)</h2>
   <p class="hint">
-    Files expected next to this page: <span class="mono">effects_v9.csv</span>, <span class="mono">disease_links.csv</span>, and <span class="mono">diagnosis_groups.csv</span>.
+    Files expected next to this page: <span class="mono">effects_v6.csv</span>, <span class="mono">disease_links.csv</span>, and <span class="mono">diagnosis_groups.csv</span>.
   </p>
 
   <div class="tabs">
@@ -321,7 +321,9 @@
         <div id="status4" class="status">Loading data…</div>
         <div class="small">Option B: define Series X and Series Y independently (outcome + sex + age + income + year). Each point is a disease. Points with missing X or Y are excluded.</div>
 
-        <div class="spacer"></div><label style="display:flex;align-items:center;gap:8px;">
+        <div class="spacer"></div>
+
+        <label style="display:flex;align-items:center;gap:8px;">
           <input type="checkbox" id="colorSig4" />
           Color by significance
         </label>
@@ -381,18 +383,19 @@
             <div class="spacer"></div>
             <div class="row">
               <div><label>Age group (Y)</label><select id="ageY"></select></div>
-              <div><label>Year (Y, relative)</label><select id="yearY"></select></div>
+              <div><label>Year (Y, relative)</label><select id="yearY"></select>
+
+        <div class="spacer"></div>
+
+<div class="small"><b>Significance</b> (α = 0.05)</div>
+        <div class="spacer"></div>
+
+        </div>
             </div>
           </div>
         </details>
 
         <div class="spacer"></div>
-
-
-        <div class="small"><b>Significance</b> (α = 0.05)</div>
-        <div class="spacer"></div>
-
-        
         <button id="resetBtn4" type="button">Reset</button>
         <div id="scatterInfo" class="small" style="margin-top:8px;"></div>
       </div>
@@ -471,7 +474,7 @@
   </div>
 
   <script>
-  // Expected effects_v9.csv columns:
+  // Expected effects_v6.csv columns:
   // disease_id, outcome, income, sex, age_group, rel_year, estimate, ci_low, ci_high, p_value, n
   // (disease names/groups are loaded from diagnosis_groups.csv)
   //
@@ -536,6 +539,9 @@
       if (p.income && !incomeOrder.includes(p.income)) incomeOrder.push(p.income);
     });
 
+    incomeOrder.sort((a,b) => (incomeOrderKey(a)-incomeOrderKey(b)) || String(a).localeCompare(String(b)));
+
+
     // Build counts table HTML
     let countsHtml = "";
     if (sexOrder.length && ageOrder.length && incomeOrder.length){
@@ -568,7 +574,7 @@
       `<div class="small" style="margin-top:12px;"><b>Top 3 ICD-10 codes within disease</b></div>` +
       `<div class="tablewrap" style="max-height:240px;margin-top:8px;">` +
       `<table><thead><tr><th>ICD-10</th><th class="right">Share</th></tr></thead><tbody>` +
-      top.map(x => `<tr><td>${x.code}</td><td class="right">${(Number(x.share)*100).toFixed(1)}%</td></tr>`).join("") +
+      top.map(x => `<tr><td><a href="https://icd.who.int/browse10/2016/en#${x.code}" target="_blank" rel="noopener">${x.code}</a></td><td class="right">${(Number(x.share)*100).toFixed(1)}%</td></tr>`).join("") +
       `</tbody></table></div>`
     ) : "";
 
@@ -1516,7 +1522,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
         mode: "lines",
         x: [x0, x1],
         y: [y0, y1],
-        line: { width },
+        line: { width, color: "#666" },
         hoverinfo: "text",
         text: [
           `link_strength: ${toFixed3(w)}<br>` +
@@ -1524,6 +1530,18 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
         ],
         showlegend: false
       });
+    }
+
+    const annotations = [];
+    for (let i=0;i<k;i++){
+      const ang=(2*Math.PI*i)/k;
+      const nx=R*Math.cos(ang);
+      const ny=R*Math.sin(ang);
+      const x0 = direction==="out" ? center.x : nx;
+      const y0 = direction==="out" ? center.y : ny;
+      const x1 = direction==="out" ? nx : center.x;
+      const y1 = direction==="out" ? ny : center.y;
+      annotations.push({x:x1,y:y1,ax:x0,ay:y0,xref:"x",yref:"y",axref:"x",ayref:"y",showarrow:true,arrowhead:2,arrowsize:1,arrowwidth:1,arrowcolor:"#666"});
     }
 
     const nodeTrace = {
@@ -1544,6 +1562,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       : `Incoming links to ${metaCenter.disease}`;
 
     Plotly.newPlot("graph3", [...edgeTraces, nodeTrace], {
+      annotations,
       title,
       xaxis: { visible: false, range: [-1.35, 1.35] },
       yaxis: { visible: false, range: [-1.35, 1.35] },
@@ -1556,8 +1575,8 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
 
   async function loadData() {
     try {
-      const resp = await fetch("./effects_v9.csv?cb=1");
-      if (!resp.ok) throw new Error(`HTTP ${resp.status} (effects_v9.csv)`);
+      const resp = await fetch("./effects_v6.csv?cb=1");
+      if (!resp.ok) throw new Error(`HTTP ${resp.status} (effects_v6.csv)`);
       const text = await resp.text();
 
       const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
@@ -1582,9 +1601,9 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       const needed = ["disease_id","outcome","income","sex","age_group","rel_year","estimate","ci_low","ci_high","p_value","n"];
       const missing = needed.filter(k => !(k in (rows[0] || {})));
       if (missing.length) {
-        setStatus1("effects_v9.csv missing columns: " + missing.join(", "));
-        setStatus2("effects_v9.csv missing columns: " + missing.join(", "));
-        setStatus3("effects_v9.csv missing columns: " + missing.join(", "));
+        setStatus1("effects_v6.csv missing columns: " + missing.join(", "));
+        setStatus2("effects_v6.csv missing columns: " + missing.join(", "));
+        setStatus3("effects_v6.csv missing columns: " + missing.join(", "));
         Plotly.newPlot("chart", [], { title: "Fix CSV schema (missing columns)" }, {responsive:true});
         Plotly.newPlot("graph3", [], { title: "Fix CSV schema (missing columns)" }, {responsive:true});
         return;
@@ -1717,7 +1736,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       fillSelect("sex2", sexVals);
       fillSelect("income2", incomeVals);
       fillSelect("age2", ageVals);
-      fillSelect("year2", yearValsNonNeg);
+      fillSelect("year2", yearVals);
       if (yearVals.includes(0)) $("year2").value = "0";
 
       ["outcome2","sex2","income2","age2","year2","sort2","top2","weightN2"].forEach(id => {
@@ -1812,10 +1831,10 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       loadDiagnoses();
     } catch (e) {
       console.error(e);
-      setStatus1("Failed to load files. Use GitHub Pages URL and ensure effects_v9.csv + disease_links.csv exist.");
-      setStatus2("Failed to load files. Use GitHub Pages URL and ensure effects_v9.csv + disease_links.csv exist.");
-      setStatus3("Failed to load files. Use GitHub Pages URL and ensure effects_v9.csv + disease_links.csv exist.");
-      setStatus4("Failed to load files. Use GitHub Pages URL and ensure effects_v9.csv + disease_links.csv exist.");
+      setStatus1("Failed to load files. Use GitHub Pages URL and ensure effects_v6.csv + disease_links.csv exist.");
+      setStatus2("Failed to load files. Use GitHub Pages URL and ensure effects_v6.csv + disease_links.csv exist.");
+      setStatus3("Failed to load files. Use GitHub Pages URL and ensure effects_v6.csv + disease_links.csv exist.");
+      setStatus4("Failed to load files. Use GitHub Pages URL and ensure effects_v6.csv + disease_links.csv exist.");
       Plotly.newPlot("chart", [], { title: "Data load failed" }, {responsive:true});
       Plotly.newPlot("scatter4", [], { title: "Data load failed" }, {responsive:true});
       Plotly.newPlot("graph3", [], { title: "Data load failed" }, {responsive:true});
