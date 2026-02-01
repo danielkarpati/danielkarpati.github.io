@@ -323,32 +323,7 @@
 
         <div class="spacer"></div>
 
-        <label style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="colorSig4" />
-          Color by significance
-        </label>
-
-        <label style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="onlySig4" />
-          Only show significant
-        </label>
-
-        <div class="spacer"></div>
-
-        <label>Significance definition</label>
-        <select id="sigDef4">
-          <option value="both" selected>Both (pX &lt; 0.05 and pY &lt; 0.05)</option>
-          <option value="either">Either (pX &lt; 0.05 or pY &lt; 0.05)</option>
-        </select>
-
-        <div class="spacer"></div>
-
-        <label style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="fitReg4" />
-          Fit regression on significant
-        </label>
-
-        <div class="spacer"></div>
+        
 
         <details open>
           <summary>Series X (x-axis)</summary>
@@ -387,7 +362,35 @@
 
         <div class="spacer"></div>
 
-<div class="small"><b>Significance</b> (α = 0.05)</div>
+
+          <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="colorSig4" />
+          Color by significance
+        </label>
+
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="onlySig4" />
+          Only show significant
+        </label>
+
+        <div class="spacer"></div>
+
+        <label>Significance definition (α = 0.05)</label>
+        <select id="sigDef4">
+          <option value="both" selected>Both (pX &lt; 0.05 and pY &lt; 0.05)</option>
+          <option value="either">Either (pX &lt; 0.05 or pY &lt; 0.05)</option>
+        </select>
+
+        <div class="spacer"></div>
+
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="fitReg4" />
+          Fit regression on significant
+        </label>
+
+        <div class="spacer"></div>
+
+                
         <div class="spacer"></div>
 
         </div>
