@@ -1717,7 +1717,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       fillSelect("sex2", sexVals);
       fillSelect("income2", incomeVals);
       fillSelect("age2", ageVals);
-      fillSelect("year2", yearVals);
+      fillSelect("year2", yearValsNonNeg);
       if (yearVals.includes(0)) $("year2").value = "0";
 
       ["outcome2","sex2","income2","age2","year2","sort2","top2","weightN2"].forEach(id => {
