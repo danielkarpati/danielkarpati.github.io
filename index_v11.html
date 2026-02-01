@@ -124,7 +124,7 @@
 <body>
   <h2>Effects dashboard</h2>
   <p class="hint">
-    Files expected next to this page: <span class="mono">effects_v3.csv</span>, <span class="mono">disease_links_with_names.csv</span>, and <span class="mono">diagnoses_extra_v2.csv</span>.
+    Files expected next to this page: <span class="mono">effects_v3.csv</span>, <span class="mono">disease_links_with_names.csv</span>, and <span class="mono">diagnosis_groups.csv</span>.
   </p>
 
   <div class="tabs">
@@ -617,8 +617,8 @@
   async function loadDiagnoses(){
     try{
       setStatus5("Loading diagnoses…");
-      const resp = await fetch("./diagnoses_extra_v2.csv?cb=1");
-      if (!resp.ok) throw new Error(`HTTP ${resp.status} (diagnoses_extra_v2.csv)`);
+      const resp = await fetch("./diagnosis_groups.csv?cb=1");
+      if (!resp.ok) throw new Error(`HTTP ${resp.status} (diagnosis_groups.csv)`);
       const text = await resp.text();
       const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
       diagRows = parsed.data || [];
@@ -655,7 +655,7 @@
       renderDiagnosesList();
     } catch(e){
       console.error(e);
-      setStatus5("Failed to load diagnoses_extra_v2.csv. Ensure it exists next to this page.");
+      setStatus5("Failed to load diagnosis_groups.csv. Ensure it exists next to this page.");
     }
   }
 
