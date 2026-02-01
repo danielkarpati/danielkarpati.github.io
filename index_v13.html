@@ -122,9 +122,9 @@
   </style>
 </head>
 <body>
-  <h2>effects_v6.csv dashboard (v12)</h2>
+  <h2>effects_v8.csv dashboard (v12)</h2>
   <p class="hint">
-    Files expected next to this page: <span class="mono">effects_v6.csv</span>, <span class="mono">disease_links.csv</span>, and <span class="mono">diagnosis_groups.csv</span>.
+    Files expected next to this page: <span class="mono">effects_v8.csv</span>, <span class="mono">disease_links.csv</span>, and <span class="mono">diagnosis_groups.csv</span>.
   </p>
 
   <div class="tabs">
@@ -441,7 +441,7 @@
   </div>
 
   <script>
-  // Expected effects_v6.csv columns:
+  // Expected effects_v8.csv columns:
   // disease_id, outcome, income, sex, age_group, rel_year, estimate, ci_low, ci_high, p_value, n
   // (disease names/groups are loaded from diagnosis_groups.csv)
   //
@@ -1471,8 +1471,8 @@ function initPersonYears(sexVals, ageVals, incomeVals) {
 
   async function loadData() {
     try {
-      const resp = await fetch("./effects_v6.csv?cb=1");
-      if (!resp.ok) throw new Error(`HTTP ${resp.status} (effects_v6.csv)`);
+      const resp = await fetch("./effects_v8.csv?cb=1");
+      if (!resp.ok) throw new Error(`HTTP ${resp.status} (effects_v8.csv)`);
       const text = await resp.text();
 
       const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
@@ -1497,9 +1497,9 @@ function initPersonYears(sexVals, ageVals, incomeVals) {
       const needed = ["disease_id","outcome","income","sex","age_group","rel_year","estimate","ci_low","ci_high","p_value","n"];
       const missing = needed.filter(k => !(k in (rows[0] || {})));
       if (missing.length) {
-        setStatus1("effects_v6.csv missing columns: " + missing.join(", "));
-        setStatus2("effects_v6.csv missing columns: " + missing.join(", "));
-        setStatus3("effects_v6.csv missing columns: " + missing.join(", "));
+        setStatus1("effects_v8.csv missing columns: " + missing.join(", "));
+        setStatus2("effects_v8.csv missing columns: " + missing.join(", "));
+        setStatus3("effects_v8.csv missing columns: " + missing.join(", "));
         Plotly.newPlot("chart", [], { title: "Fix CSV schema (missing columns)" }, {responsive:true});
         Plotly.newPlot("graph3", [], { title: "Fix CSV schema (missing columns)" }, {responsive:true});
         return;
@@ -1724,10 +1724,10 @@ function initPersonYears(sexVals, ageVals, incomeVals) {
       loadDiagnoses();
     } catch (e) {
       console.error(e);
-      setStatus1("Failed to load files. Use GitHub Pages URL and ensure effects_v6.csv + disease_links.csv exist.");
-      setStatus2("Failed to load files. Use GitHub Pages URL and ensure effects_v6.csv + disease_links.csv exist.");
-      setStatus3("Failed to load files. Use GitHub Pages URL and ensure effects_v6.csv + disease_links.csv exist.");
-      setStatus4("Failed to load files. Use GitHub Pages URL and ensure effects_v6.csv + disease_links.csv exist.");
+      setStatus1("Failed to load files. Use GitHub Pages URL and ensure effects_v8.csv + disease_links.csv exist.");
+      setStatus2("Failed to load files. Use GitHub Pages URL and ensure effects_v8.csv + disease_links.csv exist.");
+      setStatus3("Failed to load files. Use GitHub Pages URL and ensure effects_v8.csv + disease_links.csv exist.");
+      setStatus4("Failed to load files. Use GitHub Pages URL and ensure effects_v8.csv + disease_links.csv exist.");
       Plotly.newPlot("chart", [], { title: "Data load failed" }, {responsive:true});
       Plotly.newPlot("scatter4", [], { title: "Data load failed" }, {responsive:true});
       Plotly.newPlot("graph3", [], { title: "Data load failed" }, {responsive:true});
