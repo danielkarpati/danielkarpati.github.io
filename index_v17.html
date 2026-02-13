@@ -1725,7 +1725,8 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       });
 
       // defaults
-      state.diseases = new Set([orderedDiseaseIds[0]]);
+      // state.diseases = new Set([orderedDiseaseIds[0]]);
+      state.diseases = new Set(); 
       state.sexes = new Set(sexVals.slice(0,2));
       state.ages = new Set(ageVals.slice(0,2));
       state.incomes = new Set(incomeVals.slice(0,2));
