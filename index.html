@@ -748,6 +748,12 @@
     return `${disease_id}||${outcome}||${sex}||${age_group}||${income}||${rel_year}`;
   }
 
+  function formatThousands(x) {
+    const v = Number(x);
+    if (!Number.isFinite(v)) return "";
+    return Math.round(v).toLocaleString("en-US");
+  }
+
   // ---------- Tabs ----------
   function showTab(which) {
     $("tab0").classList.toggle("active", which === 0);
