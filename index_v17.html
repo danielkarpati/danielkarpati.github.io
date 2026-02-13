@@ -125,7 +125,7 @@
 <body>
   <h2>Dashboard: Effects of medical diagnoses on health and socio-economic outcomes</h2>
   <p class="normal">
-    Results from <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4282600">Crego, J. A., Karpati, D., Soerlie Kvaerner, J., & Renneboog, L. (2025). Health Risk and Economic Value: Quantifying the Insurance, Financial, and Fiscal Implications of Reducing Disease Burden. Financial, and Fiscal Implications of Reducing Disease Burden.</a>
+    Results from <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4282600" target="_blank">Crego, J. A., Karpati, D., Soerlie Kvaerner, J., & Renneboog, L. (2025). Health Risk and Economic Value: Quantifying the Insurance, Financial, and Fiscal Implications of Reducing Disease Burden. Financial, and Fiscal Implications of Reducing Disease Burden.</a>
   </p>
 
   <div class="tabs">
@@ -143,6 +143,30 @@
       <p class="normal" style="margin-top:0;">
         This dashboard presents estimates of the effects of 334 distinct <b>medical diagnoses</b> on health and socio-economic outcomes based on Crego et al. (2025).
       </p>
+
+      <h3 style="margin:14px 0 6px 0;">Methodology</h3>
+
+      The (causal) effects of each diagnosis are estimated using an event-study methodology that compares individuals diagnosed in a narrow range of time but in different years. 
+      This way, individuals diagnosed with the same health condition in a later year act as a control group for individual diagnosed in an earlier year.
+      An exception is mortality, where later-diagnosed individuals by definition suffer from no mortality and thus cannot serve as a control group. 
+      The mortality effects of each diagnosis are estimated from a multivariate regression that controls for indiciators of being diagnosed with any of the other 333 diagnoses in a given year and an age polynomial. 
+
+      <br>For details on the methodology see Crego et al. (2025).
+
+      <h3 style="margin:14px 0 6px 0;">Outcomes</h3>
+      <ul class="small" style="margin-top:6px;">
+        <li><b>Labor participation</b>: Binary indicator if the individual's main source of income is employment earnings, as determined by Statistics Netherlands 
+        <li><b>Log labor earnings</b>: Natural logarithm of annual gross employment earnings (euros)
+        <li><b>Medical expenses</b>: Annual medical expenses covered by the mandatory basic Dutch health insurance scheme (including expenses paid via deductibles) (euros)
+        <li><b>Full disability</b>: Binary indicator if the individual receives a disability benefit (WIA or WGA) and is at least 80% disabled.
+        <li><b>Mortality</b>: Binary indicator if the individual has passed away during the given year or in a previous year
+        <li><b>Physical health limitations</b>: Age-standardized index of limitations in activities of daily living approximated by mapping medicine use and categorical medical expenditures data to survey data (OECD functional limitation items). 1 unit increase corresponds to 1 standard deviation inscrease in limitations, at a given age. 
+        <li><b>Mental health limitations</b>: Age-standardized index of mental health problems approximated by mapping medicine use and categorical medical expenditures data to survey data (Kessler Psychological Distress Scale, K10). 1 unit increase corresponds to 1 standard deviation inscrease in limitations, at a given age. 
+        <li><b>Nursing home use</b>: Binary indicator for being a resident of a nursing home in the given year
+      </ul>
+
+      Some of these outcomes can be classified as `flow' (e.g., annual medical expenses), while other ones are `stock' variables (e.g., mortality).
+
 
       
       <h3 style="margin:14px 0 6px 0;">Definitions</h3>
@@ -485,7 +509,7 @@
   // disease_id_from,disease_id_to,link_strength
 
   const OUTCOME_CODE_TO_LABEL = {
-    83: "Nursing home",
+    83: "Nursing home use",
     80: "Medical expenses",
     78: "Labor participation",
     81: "Full disability",
@@ -502,7 +526,7 @@
     "Mortality",
     "Physical health limitations",
     "Mental health limitations",
-    "Nursing home"
+    "Nursing home use"
   ];
 
   let rows = [];
