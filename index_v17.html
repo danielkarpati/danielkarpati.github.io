@@ -830,6 +830,12 @@
     clearBtn.style.padding = "6px 8px";
     clearBtn.onclick = () => {
       selectedSet.clear();
+
+      panel.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+        cb.disabled = false;
+      });
+      
       syncDisabledStates(panelId, selectedSet, max);
       syncLabelsAndRender1();
     };
@@ -891,6 +897,10 @@
     clearBtn.style.padding = "6px 8px";
     clearBtn.onclick = () => {
       selectedSet.clear();
+
+        renderList(search.value);
+
+      
       syncDisabledStates(panelId, selectedSet, max);
       syncLabelsAndRender1();
     };
