@@ -142,61 +142,61 @@
   <div id="tab0" class="tabpane active">
     <div class="card">
       <p class="normal" style="margin-top:0;">
-        This dashboard presents estimates of the effects of 334 distinct <b>medical diagnoses</b> on health and socio-economic outcomes based on Crego et al. (2025).
+    This dashboard presents estimates of the effects of 334 distinct medical diagnoses on health and socio-economic outcomes, based on Crego et al. (2025).     
       </p>
 
       <h3 style="margin:14px 0 6px 0;">Methodology</h3>
 
        <p class="normal" style="margin-top:0;">
 
-      The (causal) effects of each diagnosis are estimated using an event-study methodology that compares individuals diagnosed in a narrow range of time but in different years. 
-      This way, individuals diagnosed with the same health condition in a later year act as a control group for individual diagnosed in an earlier year.
-      An exception is mortality, where later-diagnosed individuals by definition suffer from no mortality and thus cannot serve as a control group. 
-      The mortality effects of each diagnosis are estimated from a multivariate regression that controls for indiciators of being diagnosed with any of the other 333 diagnoses in a given year and an age polynomial. 
-      For details on the methodology see Crego et al. (2025).
+      The (causal) effects of each diagnosis are estimated using an event-study methodology that compares individuals diagnosed within a narrow time window but in different calendar years. Individuals diagnosed with the same condition in a later year serve as a control group for individuals diagnosed in an earlier year.
+
+      An exception is mortality. Individuals diagnosed in later years, by construction, have not yet experienced mortality at the time earlier cohorts are observed and therefore cannot serve as a control group. Mortality effects are instead estimated using a multivariate regression that controls for indicators of being diagnosed with any of the other 333 diagnoses in a given year, as well as an age polynomial.
+
+    For further methodological details, see Crego et al. (2025).
+
+         
       </p>
       
       <h3 style="margin:14px 0 6px 0;">Definitions</h3>
       <ul class="list" style="margin-top:6px;">
-        <li><b>Outcome</b>: the endpoint being studied (e.g., labor participation) at a given relative year. See below for definitions.</li>
-        <li><b>Sex</b>: male or female, as recorded by Statistics Netherlands based on municipal registers.</li>
-        <li><b>Age group</b>: age-group category (e.g., 25-44) of the age in the year of diagnosis.</li>
-        <li><b>Income</b>: permanent income-group category in three terciles (Low / Medium / High). This is determined from lifetime labor earnings, adjusted for age.</li>
-        <li><b>Relative year</b>: time since diagnosis in years (..., Dx-1, Dx+0, Dx+1, ...).</li>
+        <li><b>Outcome</b>: The endpoint being studied (e.g., labor participation) at a given relative year. See below for detailed definitions.</li>
+        <li><b>Sex</b>: Male or female, as recorded by Statistics Netherlands based on municipal registers.</li>
+        <li><b>Age group</b>: Age category (e.g., 25–44) based on age in the year of diagnosis.</li>
+        <li><b>Income</b>: Permanent income group (low / medium / high terciles), determined from lifetime labor earnings adjusted for age.</li>
+        <li><b>Relative year</b>: Time since diagnosis in years (..., Dx-1, Dx+0, Dx+1, ...).</li>
       </ul>
 
       
       <h3 style="margin:14px 0 6px 0;">Outcomes</h3>
       <ul class="list" style="margin-top:6px;">
-        <li><b>Labor participation</b>: Binary indicator if the individual's main source of income is employment earnings, as determined by Statistics Netherlands.</li>
-        <li><b>Log labor earnings</b>: Natural logarithm of annual gross employment earnings (euros).</li>
-        <li><b>Medical expenses</b>: Annual medical expenses covered by the mandatory basic Dutch health insurance scheme (including expenses paid via deductibles) (euros).</li>
-        <li><b>Full disability</b>: Binary indicator if the individual receives a disability benefit (WIA or WGA) and is at least 80% disabled.</li>
-        <li><b>Mortality</b>: Binary indicator if the individual has passed away during the given year or in a previous year.</li>
-        <li><b>Physical health limitations</b>: Age-standardized index of limitations in activities of daily living approximated by mapping medicine use and categorical medical expenditures data to survey data (OECD functional limitation items). 1 unit increase corresponds to 1 standard deviation inscrease in limitations, at a given age.</li> 
-        <li><b>Mental health limitations</b>: Age-standardized index of mental health problems approximated by mapping medicine use and categorical medical expenditures data to survey data (Kessler Psychological Distress Scale, K10). 1 unit increase corresponds to 1 standard deviation inscrease in limitations, at a given age.</li>
-        <li><b>Nursing home use</b>: Binary indicator for being a resident of a nursing home in the given year.</li>
+        <li><b>Labor participation</b>: Binary indicator equal to 1 if the individual’s main source of income is employment earnings, as determined by Statistics Netherlands.</li>
+        <li><b>Log labor earnings</b>: Natural logarithm of annual gross employment earnings (in euros).</li>
+        <li><b>Medical expenses</b>: Annual medical expenses covered by the mandatory Dutch basic health insurance scheme (including expenses paid via deductibles), in euros.</li>
+        <li><b>Full disability</b>: Binary indicator equal to 1 if the individual receives a disability benefit (WIA or WGA) and is assessed as at least 80% disabled.</li>
+        <li><b>Mortality</b>: Binary indicator equal to 1 if the individual has died during the given year or in any previous year.</li>
+        <li><b>Physical health limitations</b>: Age-standardized index of functional limitations, proxied by mapping medicine use and categorical medical expenditure data to survey-based OECD functional limitation items. A 1-unit increase corresponds to a 1 standard deviation increase in limitations at a given age.</li> 
+        <li><b>Mental health limitations</b>: Age-standardized index of mental health problems, proxied by mapping medicine use and categorical medical expenditure data to survey-based Kessler Psychological Distress Scale (K10) items. A 1-unit increase corresponds to a 1 standard deviation increase in limitations at a given age.</li>
+        <li><b>Nursing home use</b>: Binary indicator equal to 1 if the individual resides in a nursing home in the given year.</li>
       </ul>
 
       <p class="normal" style="margin-top:0;">
 
                
-      Some of these outcomes can be classified as flow (e.g., annual medical expenses), while other ones are stock variables (e.g., mortality).
+      Some outcomes are flow variables (e.g., annual medical expenses), while others are stock variables (e.g., mortality).
 
       <br>
+      Effect estimates are available for different sex–age–income groups, although not all combinations are reported. For example, labor participation estimates are not available for individuals aged 65 and over, as most individuals in this age group are retired. Conversely, nursing home use estimates are not available for individuals under age 65. In addition, some estimates are available at more aggregated levels (e.g., sex–age groups aggregated over income, or the full population).
 
-      Effects estimates for each outcome are available for different sex-age-income groups. However, not all combinations are available. For example, labor participation estimates are not available for the 65+ population as most of these individuals do not work, while nursing home use estimates are not available for the 65- population.
-      Some estimates are also available at a more aggregated level (e.g., sex-age aggregating over all income groups; or all individuals together).
-      
       </p>
 
       <h3 style="margin:14px 0 6px 0;">Tabs</h3>
       <ul class="list" style="margin-top:6px;">
-        <li><b>Effects explorer</b>: explore estimates by disease, outcome, and subgroup. </li>
-        <li><b>Rank diseases</b>: rank diseases by effect size (weighted or unweighted by incidence), in the aggregate or within age-sex-income groups.</li>
-        <li><b>Scatter</b>: plot estimates for the 334 medical diagnoses for different outcomes, relative years, or demographic groups.</li>
-        <li><b>Diagnoses</b>: information on the 334 medical diagnoses, including ICD-10 correspondance, incidence, and most frequest setting (i.e., inpatient or outpatient).</li>
-        <li><b>Disease graph</b>: graphs of one-year (Granger) causality between the 334 diagnoses.</li>
+        <li><b>Effects explorer</b>: Explore estimates by diagnosis, outcome, and subgroup. </li>
+        <li><b>Rank diseases</b>: Rank diagnoses by effect size (weighted or unweighted by incidence), either in the aggregate or within age–sex–income groups.</li>
+        <li><b>Scatter</b>: Plot estimates for the 334 diagnoses across outcomes, relative years, or demographic groups.</li>
+        <li><b>Diagnoses</b>: Information on the 334 medical diagnoses, including ICD-10 correspondence, incidence, and frequency of treatment setting (inpatient or outpatient).</li>
+        <li><b>Disease graph</b>: Directed graph of one-year Granger-causal relationships between the 334 diagnoses.</li>
       </ul>
     </div>
   </div>
