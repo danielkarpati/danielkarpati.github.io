@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Effects dashboard</title>
+  <title>Dashboard: Effects of medical diagnoses on health and socio-economic outcomes</title>
 
   <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -13,6 +13,7 @@
     h2 { margin: 0 0 10px 0; }
     .hint { color: #444; margin: 0 0 14px 0; }
     .small { font-size: 12px; color: #555; }
+    .small { font-size: 13px; color: #555; }
     .normal { font-size: 14px; color: #555; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     .card { border: 1px solid #ddd; border-radius: 12px; padding: 12px; }
@@ -150,12 +151,11 @@
       This way, individuals diagnosed with the same health condition in a later year act as a control group for individual diagnosed in an earlier year.
       An exception is mortality, where later-diagnosed individuals by definition suffer from no mortality and thus cannot serve as a control group. 
       The mortality effects of each diagnosis are estimated from a multivariate regression that controls for indiciators of being diagnosed with any of the other 333 diagnoses in a given year and an age polynomial. 
-
-      <br>For details on the methodology see Crego et al. (2025).
+      For details on the methodology see Crego et al. (2025).
 
       
       <h3 style="margin:14px 0 6px 0;">Definitions</h3>
-      <ul class="small" style="margin-top:6px;">
+      <ul class="list" style="margin-top:6px;">
         <li><b>Outcome</b>: the endpoint being studied (e.g., labor participation) at a given relative year. See below for definitions.</li>
         <li><b>Sex</b>: male or female, as recorded by Statistics Netherlands based on municipal registers.</li>
         <li><b>Age group</b>: age-group category (e.g., 25-44) of the age in the year of diagnosis.</li>
