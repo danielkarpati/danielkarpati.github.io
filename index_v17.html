@@ -264,7 +264,7 @@
 
       <div class="card">
         <div id="chart"></div>
-        <div class="small">Hover shows estimate, CI, and n. Use the checkbox to show/hide a CI ribbon.  p-value, n. Lines = all combos of selected diseases × sex × age × income (up to 16).</div>
+        <div class="small">Lines = all combos of selected diseases × sex × age × income (up to 16). Hover over the lines to see estimate, confidence interval, p-value, CI, and the number of diagnosed individuals in the sex-age-income group used for the estimates (n).  </div>
       </div>
     </div>
   </div>
@@ -274,7 +274,6 @@
     <div class="grid">
       <div class="card">
         <div id="status2" class="status">Loading data…</div>
-        <div class="small">Choose subgroup + year + outcome, then rank diseases by estimate (optionally weighted by n).</div>
 
         <div class="spacer"></div>
 
@@ -321,7 +320,7 @@
 
         <label style="display:flex;align-items:center;gap:8px;">
           <input type="checkbox" id="weightN2" />
-          Weight ranking by n (rank by n × estimate)
+          Weight ranking by (approximate) annual number of cases
         </label>
 <div class="spacer"></div>
         <button id="resetBtn2" type="button">Reset</button>
@@ -1182,13 +1181,13 @@ traces.push({
 
     Plotly.newPlot("chart", traces, {
       title: `${outcome} — ${found} line(s)`,
-      xaxis: { title: "Years relative to baseline", dtick: 1 },
+      xaxis: { title: "Years relative to diagnosis", dtick: 1 },
       yaxis: { title: "Effect estimate", zeroline: true },
       margin: {l: 60, r: 20, t: 55, b: 55},
       legend: { orientation: "h" }
     }, {responsive: true});
 
-    setStatus1(`Loaded ${rows.length.toLocaleString()} rows. Rendering ${found} series.`);
+    setStatus1(`Loaded ${rows.length.toLocaleString()} rows.`);
   }
 
   // ---------- Tab 2: ranking ----------
@@ -1246,7 +1245,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       `Slice: ${outcome} | ${sex} | ${age} | ${income} | year ${year}. ` +
       `Ranking by ${weightN ? "n×estimate" : "estimate"}. ` +
       `Showing ${list.length} of ${byDisease.size} diseases.`;
-    setStatus2(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+    setStatus2(`Loaded ${rows.length.toLocaleString()} rows.`);
   }
 
   // ---------- Tab 4: scatter (Option B) ----------
