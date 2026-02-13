@@ -133,7 +133,7 @@
     <button id="tab0btn" class="tabbtn active" type="button">Introduction</button>
     <button id="tab1btn" class="tabbtn" type="button">Effects explorer</button>
     <button id="tab2btn" class="tabbtn" type="button">Rank diseases</button>
-    <button id="tab4btn" class="tabbtn" type="button">Scatter</button>
+    <button id="tab4btn" class="tabbtn" type="button">Scatter plots</button>
     <button id="tab5btn" class="tabbtn" type="button">Diagnoses</button>
     <button id="tab3btn" class="tabbtn" type="button">Disease graph</button>
   </div>
@@ -194,7 +194,7 @@
       <ul class="list" style="margin-top:6px;">
         <li><b>Effects explorer</b>: Explore estimates by diagnosis, outcome, and subgroup. </li>
         <li><b>Rank diseases</b>: Rank diagnoses by effect size (weighted or unweighted by incidence), either in the aggregate or within age–sex–income groups.</li>
-        <li><b>Scatter</b>: Plot estimates for the 334 diagnoses across outcomes, relative years, or demographic groups.</li>
+        <li><b>Scatter plots</b>: Plot estimates for the 334 diagnoses across outcomes, relative years, or demographic groups.</li>
         <li><b>Diagnoses</b>: Information on the 334 medical diagnoses, including ICD-10 correspondence, incidence, and frequency of treatment setting (inpatient or outpatient).</li>
         <li><b>Disease graph</b>: Directed graph of one-year Granger-causal relationships between the 334 diagnoses.</li>
       </ul>
@@ -356,7 +356,7 @@
     <div class="grid">
       <div class="card">
         <div id="status4" class="status">Loading data…</div>
-        <div class="small">Option B: define Series X and Series Y independently (outcome + sex + age + income + year). Each point is a disease. Points with missing X or Y are excluded.</div>
+        <div class="small">Select series X and Series Y (outcome + sex + age + income + year). Each point is a disease. Points with missing X or Y are excluded.</div>
 
         <div class="spacer"></div>
 
@@ -406,7 +406,6 @@
 
         <div class="spacer"></div>
         <button id="resetBtn4" type="button">Reset</button>
-        <div id="scatterInfo" class="small" style="margin-top:8px;"></div>
 
          <div class="spacer"></div>
 
@@ -437,12 +436,15 @@
         </label>
 
         <div class="spacer"></div>
- 
+
+         <div id="scatterInfo" class="small" style="margin-top:8px;"></div>
+
+        
       </div>
 
       <div class="card">
         <div id="scatter4" style="width:100%;height:580px;"></div>
-        <div class="small">Marker size reflects n (geometric mean of n on X and Y). Hover shows values for both series and p-values.</div>
+        <div class="small">Marker size reflects number of diagnoses in sample (geometric mean for series X and Y). Hover shows values for both series and p-values.</div>
       </div>
     </div>
   </div>
@@ -1443,7 +1445,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       `${filtSummary} ${sigSummary} ` +
       (regText ? regText : "");
 
-    setStatus4(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+    setStatus4(`Loaded ${rows.length.toLocaleString()} rows.`);
   }
 
   // ---------- Tab 3: disease graph
