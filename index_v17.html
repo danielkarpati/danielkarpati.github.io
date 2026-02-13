@@ -748,6 +748,19 @@
     return `${disease_id}||${outcome}||${sex}||${age_group}||${income}||${rel_year}`;
   }
 
+function formatEuroCompact(x) {
+  const v = Number(x);
+  if (!Number.isFinite(v)) return "";
+  const ax = Math.abs(v);
+  const sign = v < 0 ? "-" : "";
+
+  if (ax >= 1e9) return `${sign}€${(ax / 1e9).toFixed(1)}B`;
+  if (ax >= 1e6) return `${sign}€${(ax / 1e6).toFixed(1)}M`;
+  if (ax >= 1e3) return `${sign}€${(ax / 1e3).toFixed(0)}k`;
+  return `${sign}€${ax.toFixed(0)}`;
+}
+    
+
   // ---------- Tabs ----------
   function showTab(which) {
     $("tab0").classList.toggle("active", which === 0);
@@ -1199,6 +1212,8 @@ traces.push({
   function renderRank() {
     if (!rows.length) return;
 
+    const isMed = (outcome === "Medical expenses");
+
     const outcome = $("outcome2").value;
     const sex = $("sex2").value;
     const income = $("income2").value;
@@ -1229,20 +1244,27 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     const body = $("rankBody");
     body.innerHTML = "";
 
-    for (const r of list) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${(__diseaseMetaById?.[r.disease_id]?.disease_group) || ''}</td>
-        <td>${(__diseaseMetaById?.[r.disease_id]?.disease) || r.disease_id}</td>
-        <td class="right">${toFixed3(r.estimate)}</td>
-        <td class="right">${toFixed3((Number(r.estimate) * Number(r.n)) / 4.75)}</td>
-        <td class="right">${toFixed3(r.ci_low)}</td>
-        <td class="right">${toFixed3(r.ci_high)}</td>
-        <td class="right">${exp2(r.p_value)}</td>
-        <td class="right">${Math.round(Number(r.n)/4.75).toLocaleString()}</td>
-      `;
-      body.appendChild(tr);
-    }
+   for (const r of list) {
+  const tr = document.createElement("tr");
+
+  const est = Number(r.estimate);
+  const burden = (est * Number(r.n)) / 4.75;
+
+  tr.innerHTML = `
+    <td>${(__diseaseMetaById?.[r.disease_id]?.disease_group) || ''}</td>
+    <td>${(__diseaseMetaById?.[r.disease_id]?.disease) || r.disease_id}</td>
+
+    <td class="right">${isMed ? formatEuroCompact(est) : toFixed3(est)}</td>
+    <td class="right">${isMed ? formatEuroCompact(burden) : toFixed3(burden)}</td>
+
+    <td class="right">${isMed ? formatEuroCompact(r.ci_low)  : toFixed3(r.ci_low)}</td>
+    <td class="right">${isMed ? formatEuroCompact(r.ci_high) : toFixed3(r.ci_high)}</td>
+
+    <td class="right">${exp2(r.p_value)}</td>
+    <td class="right">${Math.round(Number(r.n)/4.75).toLocaleString()}</td>
+  `;
+  body.appendChild(tr);
+  }
 
     $("rankInfo").textContent =
       `Slice: ${outcome} | ${sex} | ${age} | ${income} | year ${year}. ` +
