@@ -344,6 +344,8 @@
             <tbody id="rankBody"></tbody>
           </table>
         </div>
+        <div class="small" style="margin-top:8px;">Annual cases: number of cases (in the demographic group) between January 2013 and September 2017 divided by 4.75. Cohort-entry annual burden = estimate × annual cases </div>
+
         <div id="rankInfo" class="small" style="margin-top:8px;"></div>
       </div>
     </div>
@@ -1243,7 +1245,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
 
     $("rankInfo").textContent =
       `Slice: ${outcome} | ${sex} | ${age} | ${income} | year ${year}. ` +
-      `Ranking by ${weightN ? "n×estimate" : "estimate"}. ` +
+      `Ranking by ${weightN ? "incidence-weigted estimate" : "unweighted estimate"}. ` +
       `Showing ${list.length} of ${byDisease.size} diseases.`;
     setStatus2(`Loaded ${rows.length.toLocaleString()} rows.`);
   }
