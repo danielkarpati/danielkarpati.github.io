@@ -132,10 +132,10 @@
   <div class="tabs">
     <button id="tab0btn" class="tabbtn active" type="button">Introduction</button>
     <button id="tab1btn" class="tabbtn" type="button">Effects explorer</button>
-    <button id="tab2btn" class="tabbtn" type="button">Rank diseases</button>
+    <button id="tab2btn" class="tabbtn" type="button">Rank diagnoses</button>
     <button id="tab4btn" class="tabbtn" type="button">Scatter plots</button>
     <button id="tab5btn" class="tabbtn" type="button">Diagnoses</button>
-    <button id="tab3btn" class="tabbtn" type="button">Disease graph</button>
+    <button id="tab3btn" class="tabbtn" type="button">Diagnosis graph</button>
   </div>
 
   <!-- TAB 1 -->
@@ -193,10 +193,10 @@
       <h3 style="margin:14px 0 6px 0;">Tabs</h3>
       <ul class="list" style="margin-top:6px;">
         <li><b>Effects explorer</b>: Explore estimates by diagnosis, outcome, and subgroup. </li>
-        <li><b>Rank diseases</b>: Rank diagnoses by effect size (weighted or unweighted by incidence), either in the aggregate or within age–sex–income groups.</li>
+        <li><b>Rank diagnoses</b>: Rank diagnoses by effect size (weighted or unweighted by incidence), either in the aggregate or within age–sex–income groups.</li>
         <li><b>Scatter plots</b>: Plot estimates for the 334 diagnoses across outcomes, relative years, or demographic groups.</li>
         <li><b>Diagnoses</b>: Information on the 334 medical diagnoses, including ICD-10 correspondence, incidence, and frequency of treatment setting (inpatient or outpatient).</li>
-        <li><b>Disease graph</b>: Directed graph of one-year Granger-causal relationships between the 334 diagnoses.</li>
+        <li><b>Diagnosis graph</b>: Directed graph of one-year Granger-causal relationships between the 334 diagnoses.</li>
       </ul>
     </div>
   </div>
@@ -264,7 +264,7 @@
 
       <div class="card">
         <div id="chart"></div>
-        <div class="small">Lines = all combos of selected diseases × sex × age × income (up to 16). Hover over the lines to see estimate, confidence interval, p-value, CI, and the number of diagnosed individuals in the sex-age-income group underlying the estimates (n).  </div>
+        <div class="small">Lines = all combos of selected diagnoses × sex × age × income (up to 16). Hover over the lines to see estimate, confidence interval, p-value, CI, and the number of diagnosed individuals in the sex-age-income group underlying the estimates (n).  </div>
       </div>
     </div>
   </div>
@@ -331,8 +331,8 @@
           <table>
             <thead>
               <tr>
-                <th>Disease group</th>
-                <th>Disease</th>
+                <th>Diagnosis group</th>
+                <th>Diagnosis</th>
                 <th class="right">Estimate</th>
                 <th class="right" title="estimate × n / 4.75">Cohort-entry annual burden</th>
                 <th class="right">CI low</th>
@@ -356,7 +356,7 @@
     <div class="grid">
       <div class="card">
         <div id="status4" class="status">Loading data…</div>
-        <div class="small">Select series X and Series Y (outcome + sex + age + income + year). Each point is a disease. Points with missing X or Y are excluded.</div>
+        <div class="small">Select series X and Series Y (outcome + sex + age + income + year). Each point is a diagnosis Points with missing X or Y are excluded.</div>
 
         <div class="spacer"></div>
 
@@ -457,7 +457,7 @@
         <div id="status5" class="status">Loading diagnoses…</div>
         <div class="small">Search diagnoses; click on a diagnosis to open details.</div>
         <div class="spacer"></div>
-        <input id="diagSearch" class="diagSearch" type="text" placeholder="Search by disease, ICD code, or internal id…" />
+        <input id="diagSearch" class="diagSearch" type="text" placeholder="Search by diagnosis, ICD code, or internal id…" />
         <div class="spacer"></div>
         <div class="diagHdr">
           <div><b>Internal id</b></div>
@@ -486,13 +486,13 @@
     <div class="grid">
       <div class="card">
         <div id="status3" class="status">Loading graph…</div>
-        <div class="small">Pick a disease, then show outgoing or incoming edges (directed, weighted).</div>
+        <div class="small">Pick a diagnosis, then show outgoing or incoming edges (directed, weighted).</div>
 
         <div class="spacer"></div>
 
-        <label>Select disease (single)</label>
+        <label>Select diagnosis (single)</label>
         <div class="dd">
-          <button class="ddbtn" id="btn-disease3" type="button">Select a disease…</button>
+          <button class="ddbtn" id="btn-disease3" type="button">Select a diagnosis…</button>
           <div class="panel" id="panel-disease3"></div>
         </div>
         <input type="hidden" id="disease3" />
@@ -887,7 +887,7 @@
 
     const search = document.createElement("input");
     search.type = "text";
-    search.placeholder = "Search disease…";
+    search.placeholder = "Search diagnosis…";
 
     const pill = document.createElement("span");
     pill.className = "pill";
@@ -991,7 +991,7 @@
 
     const search = document.createElement("input");
     search.type = "text";
-    search.placeholder = "Search disease…";
+    search.placeholder = "Search diagnosis…";
 
     const clearBtn = document.createElement("button");
     clearBtn.type = "button";
@@ -1163,7 +1163,7 @@ traces.push({
         x: s.map(r => r.rel_year),
         y: s.map(r => r.estimate),
         text: s.map(r =>
-          `Disease: ${diseaseName}<br>` +
+          `Diagnosis: ${diseaseName}<br>` +
           `Outcome: ${r.outcome}<br>` +
           `Sex: ${r.sex}, Age: ${r.age_group}, Income: ${r.income}<br>` +
           `Year: ${r.rel_year}<br>` +
@@ -1247,7 +1247,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     $("rankInfo").textContent =
       `Slice: ${outcome} | ${sex} | ${age} | ${income} | year ${year}. ` +
       `Ranking by ${weightN ? "incidence-weigted estimate" : "unweighted estimate"}. ` +
-      `Showing ${list.length} of ${byDisease.size} diseases.`;
+      `Showing ${list.length} of ${byDisease.size} diagnoses.`;
     setStatus2(`Loaded ${rows.length.toLocaleString()} rows.`);
   }
 
@@ -1315,8 +1315,8 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     }
 
     if (!tmp.length) {
-      Plotly.newPlot("scatter4", [], { title: "No overlapping diseases for selected X/Y series" }, { responsive: true });
-      $("scatterInfo").textContent = `No points to plot. Excluded ${excluded.toLocaleString()} diseases due to missing X or Y (or significance filter).`;
+      Plotly.newPlot("scatter4", [], { title: "No overlapping diagnoses for selected X/Y series" }, { responsive: true });
+      $("scatterInfo").textContent = `No points to plot. Excluded ${excluded.toLocaleString()} diagnoses due to missing X or Y (or significance filter).`;
       setStatus4(`Loaded ${rows.length.toLocaleString()} rows. No overlapping points.`);
       return;
     }
@@ -1425,7 +1425,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     const yTitle = `${specY.outcome} (${specY.sex}, ${specY.age_group}, ${specY.income}, year ${specY.rel_year}) — estimate`;
 
     Plotly.newPlot("scatter4", traces, {
-      title: `Diseases: ${tmp.length.toLocaleString()} point(s)`,
+      title: `Diagnoses: ${tmp.length.toLocaleString()} point(s)`,
       xaxis: { title: xTitle, zeroline: true },
       yaxis: { title: yTitle, zeroline: true },
       margin: { l: 70, r: 20, t: 55, b: 70 },
@@ -1440,7 +1440,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       : `Filter: none.`;
 
     $("scatterInfo").textContent =
-      `Plotted ${tmp.length.toLocaleString()} diseases. Excluded ${excluded.toLocaleString()} (missing X or Y, or filtered). ` +
+      `Plotted ${tmp.length.toLocaleString()} diagnoses. Excluded ${excluded.toLocaleString()} (missing X or Y, or filtered). ` +
       `${filtSummary} ${sigSummary} ` +
       (regText ? regText : "");
 
@@ -1510,15 +1510,15 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     $("outBtn3").onclick = () => renderGraphForSelection("out");
     $("inBtn3").onclick = () => renderGraphForSelection("in");
 
-    $("graphInfo3").textContent = "Select a disease and click a button.";
+    $("graphInfo3").textContent = "Select a diagnosis and click a button.";
   }
 
 
   function renderGraphForSelection(direction) {
     const didRaw = $("disease3")?.value;
     if (!didRaw) {
-      Plotly.newPlot("graph3", [], { title: "Select a disease" }, {responsive:true});
-      $("graphInfo3").textContent = "Select a disease first.";
+      Plotly.newPlot("graph3", [], { title: "Select a diagnosis" }, {responsive:true});
+      $("graphInfo3").textContent = "Select a diagnosis first.";
       return;
     }
     const did = Number(didRaw);
@@ -1529,11 +1529,11 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
 
     if (!neighbors.length) {
       Plotly.newPlot("graph3", [], { title: "No edges for selection" }, {responsive:true});
-      $("graphInfo3").textContent = `No ${direction === "out" ? "outgoing" : "incoming"} links for the selected disease.`;
+      $("graphInfo3").textContent = `No ${direction === "out" ? "outgoing" : "incoming"} links for the selected diagnosis.`;
       return;
     }
 
-    // Layout: selected disease at center, neighbors on a circle
+    // Layout: selected diagnosis at center, neighbors on a circle
     const R = 1.0;
     const k = neighbors.length;
     const center = { x: 0, y: 0 };
