@@ -264,7 +264,7 @@
 
       <div class="card">
         <div id="chart"></div>
-        <div class="small">Lines = all combos of selected diseases × sex × age × income (up to 16). Hover over the lines to see estimate, confidence interval, p-value, CI, and the number of diagnosed individuals in the sex-age-income group used for the estimates (n).  </div>
+        <div class="small">Lines = all combos of selected diseases × sex × age × income (up to 16). Hover over the lines to see estimate, confidence interval, p-value, CI, and the number of diagnosed individuals in the sex-age-income group underlying the estimates (n).  </div>
       </div>
     </div>
   </div>
@@ -444,7 +444,7 @@
 
       <div class="card">
         <div id="scatter4" style="width:100%;height:580px;"></div>
-        <div class="small">Marker size reflects number of diagnoses in sample (geometric mean for series X and Y). Hover shows values for both series and p-values.</div>
+        <div class="small">Marker size reflects number of total cases in sample (geometric mean for series X and Y). Hover shows estimates, confidence intervals, p-values, and number of cases for both series.</div>
       </div>
     </div>
   </div>
@@ -455,7 +455,7 @@
     <div class="diagWrap">
       <div class="card">
         <div id="status5" class="status">Loading diagnoses…</div>
-        <div class="small">Search diagnoses; click a disease to open details.</div>
+        <div class="small">Search diagnoses; click on a diagnosis to open details.</div>
         <div class="spacer"></div>
         <input id="diagSearch" class="diagSearch" type="text" placeholder="Search by disease, ICD code, or internal id…" />
         <div class="spacer"></div>
@@ -593,8 +593,7 @@
     // Build counts table HTML
     let countsHtml = "";
     if (sexOrder.length && ageOrder.length && incomeOrder.length){
-      countsHtml += `<div class="small" style="margin-top:10px;"><b>Diagnosed counts by sex × age × income</b></div>`;
-      countsHtml += `<div class="small" style="margin-top:4px;">Values are people diagnosed (2013–2017).</div>`;
+      countsHtml += `<div class="small" style="margin-top:10px;"><b>Number of total cases Jan 2013 - Sep 2017 by sex × age × income group</b></div>`;
       countsHtml += `<div class="tablewrap" style="max-height:320px;margin-top:8px;">`;
       countsHtml += `<table><thead><tr><th>Sex</th><th>Age</th>` + incomeOrder.map(i=>`<th class="right">${i}</th>`).join("") + `</tr></thead><tbody>`;
       for (const sx of sexOrder){
@@ -619,7 +618,7 @@
     ].filter(x => x.code);
 
     const topHtml = top.length ? (
-      `<div class="small" style="margin-top:12px;"><b>Top 3 ICD-10 codes within disease</b></div>` +
+      `<div class="small" style="margin-top:12px;"><b>Top 3 ICD-10 codes within diagnosis</b></div>` +
       `<div class="tablewrap" style="max-height:240px;margin-top:8px;">` +
       `<table><thead><tr><th>ICD-10</th><th class="right">Share</th></tr></thead><tbody>` +
       top.map(x => `<tr><td><a href="https://icd.who.int/browse10/2016/en#${x.code}" target="_blank" rel="noopener">${x.code}</a></td><td class="right">${(Number(x.share)*100).toFixed(1)}%</td></tr>`).join("") +
@@ -642,7 +641,7 @@
       <div class="kv"><div><b>Internal id</b></div><div class="mono">${r.disease_id}</div></div>
       <div class="kv"><div><b>ICD</b></div><div class="mono">${r.icd_code}</div></div>
       <div class="kv"><div><b>ICD title</b></div><div>${r.icd_name}</div></div>
-      <div class="kv"><div><b>Total diagnosed</b></div><div>${Number(r.n_total||0).toLocaleString()}</div></div>
+      <div class="kv"><div><b>Total cases (Jan 2013 - Sep 2017)</b></div><div>${Number(r.n_total||0).toLocaleString()}</div></div>
       ${shareBar}
       ${countsHtml}
       ${topHtml}
@@ -711,7 +710,7 @@
       listEl.appendChild(details);
     }
 
-    setStatus5(diagRows.length ? `Loaded ${diagRows.length.toLocaleString()} diagnoses. Showing ${shown.toLocaleString()}.` : "No diagnoses loaded.");
+    setStatus5(diagRows.length ? `Loaded ${diagRows.length.toLocaleString()} diagnoses.` : "No diagnoses loaded.");
   }
 
   async function loadDiagnoses(){
