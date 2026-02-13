@@ -1237,13 +1237,17 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
 
     for (const r of list) {
       const tr = document.createElement("tr");
+      const isMed = (outcome === "Medical expenses");
+      const est = Number(r.estimate);
+      const burden = (est * Number(r.n)) / 4.75;
+            
       tr.innerHTML = `
         <td>${(__diseaseMetaById?.[r.disease_id]?.disease_group) || ''}</td>
         <td>${(__diseaseMetaById?.[r.disease_id]?.disease) || r.disease_id}</td>
-        <td class="right">${toFixed3(r.estimate)}</td>
-        <td class="right">${toFixed3((Number(r.estimate) * Number(r.n)) / 4.75)}</td>
-        <td class="right">${toFixed3(r.ci_low)}</td>
-        <td class="right">${toFixed3(r.ci_high)}</td>
+        <td class="right">${isMed ? formatThousands(est) : toFixed3(est)}</td>
+        <td class="right">${isMed ? formatThousands(burden) : toFixed3(burden)}</td>
+        <td class="right">${isMed ? formatThousands(r.ci_low)  : toFixed3(r.ci_low)}</td>
+        <td class="right">${isMed ? formatThousands(r.ci_high) : toFixed3(r.ci_high)}</td>
         <td class="right">${exp2(r.p_value)}</td>
         <td class="right">${Math.round(Number(r.n)/4.75).toLocaleString()}</td>
       `;
