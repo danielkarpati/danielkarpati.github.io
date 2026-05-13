@@ -542,14 +542,7 @@
     <div class="grid">
       <div class="card">
         <div id="status3" class="status">Loading graph…</div>
-        <div class="small">Pick a sex, age group, and diagnosis, then show outgoing or incoming edges (directed, weighted).</div>
-
-        <div class="spacer"></div>
-
-        <div class="row">
-          <div><label>Sex</label><select id="sex3"></select></div>
-          <div><label>Age group</label><select id="age3"></select></div>
-        </div>
+        <div class="small">Pick a diagnosis, then sex and age group, then show outgoing or incoming edges.</div>
 
         <div class="spacer"></div>
 
@@ -559,6 +552,13 @@
           <div class="panel" id="panel-disease3"></div>
         </div>
         <input type="hidden" id="disease3" />
+
+        <div class="spacer"></div>
+
+        <div class="row">
+          <div><label>Sex</label><select id="sex3"></select></div>
+          <div><label>Age group</label><select id="age3"></select></div>
+        </div>
 
         <div class="spacer"></div>
 
@@ -1093,7 +1093,12 @@
 
       orderedGroupNames().filter(g=>groupsToIds[g]).forEach(g => {
         const ids = groupsToIds[g];
-        const visible = q ? ids.filter(id => (idToLabel[id] || id).toLowerCase().includes(q)) : ids.slice();
+        const visible = q ? ids.filter(id => {
+          const icd = diagById.get(id)?.icd_code || "";
+          return (idToLabel[id] || id).toLowerCase().includes(q) ||
+                 String(id).toLowerCase().includes(q) ||
+                 icd.toLowerCase().includes(q);
+        }) : ids.slice();
         if (q && visible.length === 0) return;
 
         const details = document.createElement("details");
@@ -1116,13 +1121,14 @@
           radio.value = id;
           radio.onchange = () => {
             onSelect(id);
-            $(btnId).textContent = idToLabel[id] || id;
+            $(btnId).textContent = `ID${id} · ${idToLabel[id] || id}`;
             $(panelId).classList.remove("open");
           };
 
+          const icd = diagById.get(id)?.icd_code || "";
           const label = document.createElement("label");
           label.style.margin = "0";
-          label.textContent = idToLabel[id] || id;
+          label.innerHTML = `ID${id} &middot; ${idToLabel[id] || id}` + (icd ? ` <span style="font-size:11px;color:#888;">(${icd})</span>` : "");
 
           row.appendChild(radio);
           row.appendChild(label);
@@ -1694,6 +1700,41 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     setStatus3(`Loaded ${links.length.toLocaleString()} edges. Ready.`);
   }
 
+  function updateGraphAvailability() {
+    const didRaw = $("disease3")?.value;
+    const sel3sex = $("sex3");
+    const sel3age = $("age3");
+    if (!sel3sex || !sel3age) return;
+
+    if (!didRaw) {
+      // no diagnosis selected — enable everything
+      for (const opt of sel3sex.options) { opt.disabled = false; opt.style.color = ""; }
+      for (const opt of sel3age.options) { opt.disabled = false; opt.style.color = ""; }
+      return;
+    }
+
+    const did = Number(didRaw);
+    const availSex = new Set();
+    const availAge = new Set();
+    for (const e of links) {
+      if (e.disease_id_from === did || e.disease_id_to === did) {
+        if (e.sex)       availSex.add(e.sex);
+        if (e.age_group) availAge.add(e.age_group);
+      }
+    }
+
+    for (const opt of sel3sex.options) {
+      const unavail = !availSex.has(opt.value);
+      opt.disabled = unavail;
+      opt.style.color = unavail ? "#bbb" : "";
+    }
+    for (const opt of sel3age.options) {
+      const unavail = !availAge.has(opt.value);
+      opt.disabled = unavail;
+      opt.style.color = unavail ? "#bbb" : "";
+    }
+  }
+
   function initTab3() {
     const groupsToIds = {};
     const idToLabel = {};
@@ -1719,8 +1760,11 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       btnId: "btn-disease3",
       groupsToIds,
       idToLabel,
-      onSelect: (id) => { $("disease3").value = id || ""; }
+      onSelect: (id) => { $("disease3").value = id || ""; updateGraphAvailability(); }
     });
+
+    if ($("sex3"))  $("sex3").addEventListener("change", updateGraphAvailability);
+    if ($("age3"))  $("age3").addEventListener("change", updateGraphAvailability);
 
     $("outBtn3").onclick = () => renderGraphForSelection("out");
     $("inBtn3").onclick = () => renderGraphForSelection("in");
@@ -1793,6 +1837,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       const x1 = direction === "out" ? nx : center.x;
       const y1 = direction === "out" ? ny : center.y;
 
+      const wPct = (w * 100).toFixed(2);
       edgeTraces.push({
         type: "scatter",
         mode: "lines",
@@ -1801,8 +1846,8 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
         line: { width, color: "#666" },
         hoverinfo: "text",
         hovertext: [
-          `link_strength: ${toFixed3(w)}<br>${direction === "out" ? metaCenter.disease : m.disease} → ${direction === "out" ? m.disease : metaCenter.disease}`,
-          `link_strength: ${toFixed3(w)}<br>${direction === "out" ? metaCenter.disease : m.disease} → ${direction === "out" ? m.disease : metaCenter.disease}`
+          `${direction === "out" ? metaCenter.disease : m.disease} → ${direction === "out" ? m.disease : metaCenter.disease}<br>link strength: ${wPct} pp`,
+          `${direction === "out" ? metaCenter.disease : m.disease} → ${direction === "out" ? m.disease : metaCenter.disease}<br>link strength: ${wPct} pp`
         ],
         showlegend: false
       });
