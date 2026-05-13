@@ -158,6 +158,9 @@
         <p class="normal" style="margin:0 0 8px 0;">
           <strong>Mortality</strong> is an exception — later-year cohorts cannot serve as controls by construction. It is estimated via multivariate regression controlling for all 333 other diagnoses and an age polynomial.
         </p>
+        <p class="normal" style="margin:0;">
+          <strong>Diagnosis graph</strong> — Links represent one-year Granger-causal relationships. For each diagnosis, a Lasso regression predicts the probability of receiving that diagnosis in year T+1 using indicators for all 334 diagnoses in year T, age, age², and permanent income tercile dummies. The link strength is the estimated increase in probability (in percentage points).
+        </p>
         <p class="normal" style="margin:0;">For full details see <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4282600" target="_blank">Crego et al. (2025)</a>.</p>
       </div>
 
@@ -1838,17 +1841,30 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       const y1 = direction === "out" ? ny : center.y;
 
       const wPct = (w * 100).toFixed(2);
+      const fromLabel = direction === "out" ? metaCenter.disease : m.disease;
+      const toLabel   = direction === "out" ? m.disease : metaCenter.disease;
+      const hoverLabel = `${fromLabel} → ${toLabel}<br>link strength: ${wPct} pp`;
+
+      // Line trace (no hover on lines in Plotly — hover handled by midpoint marker below)
       edgeTraces.push({
         type: "scatter",
         mode: "lines",
         x: [x0, x1],
         y: [y0, y1],
         line: { width, color: "#666" },
+        hoverinfo: "skip",
+        showlegend: false
+      });
+
+      // Invisible midpoint marker that carries the hover tooltip
+      edgeTraces.push({
+        type: "scatter",
+        mode: "markers",
+        x: [(x0 + x1) / 2],
+        y: [(y0 + y1) / 2],
+        marker: { size: 12, opacity: 0, color: "#666" },
         hoverinfo: "text",
-        hovertext: [
-          `${direction === "out" ? metaCenter.disease : m.disease} → ${direction === "out" ? m.disease : metaCenter.disease}<br>link strength: ${wPct} pp`,
-          `${direction === "out" ? metaCenter.disease : m.disease} → ${direction === "out" ? m.disease : metaCenter.disease}<br>link strength: ${wPct} pp`
-        ],
+        hovertext: [hoverLabel],
         showlegend: false
       });
     }
