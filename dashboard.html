@@ -125,9 +125,6 @@
 </head>
 <body>
   <h2>Dashboard: Effects of medical diagnoses on health and socio-economic outcomes</h2>
-  <p class="normal">
-    Results from <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4282600" target="_blank">Crego, J. A., Karpati, D., Soerlie Kvaerner, J., & Renneboog, L. (2025). Health Risk and Economic Value: Quantifying the Insurance, Financial, and Fiscal Implications of Reducing Disease Burden. Financial, and Fiscal Implications of Reducing Disease Burden.</a>
-  </p>
 
   <div class="tabs">
     <button id="tab0btn" class="tabbtn active" type="button">Introduction</button>
@@ -138,66 +135,129 @@
     <button id="tab3btn" class="tabbtn" type="button">Diagnosis graph</button>
   </div>
 
-  <!-- TAB 1 -->
+  <!-- TAB 0: Introduction -->
   <div id="tab0" class="tabpane active">
-    <div class="card">
-      <p class="normal" style="margin-top:0;">
-    This dashboard presents estimates of the effects of 334 distinct medical diagnoses on health and socio-economic outcomes, based on Crego et al. (2025).     
-      </p>
 
-      <h3 style="margin:14px 0 6px 0;">Methodology</h3>
+    <!-- Citation -->
+    <div style="border-left:3px solid #2b6cb0; padding:10px 16px; margin-bottom:16px; background:#f7f9fc; border-radius:0 8px 8px 0;">
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#718096; margin-bottom:5px;">Based on</div>
+      <div style="font-size:13px; color:#2d3748; line-height:1.6;">
+        Crego, J. A., Karpati, D., Soerlie Kvaerner, J., &amp; Renneboog, L. (2025).
+        <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4282600" target="_blank" style="color:#2b6cb0; font-style:italic;">Health Risk and Economic Value: Quantifying the Insurance, Financial, and Fiscal Implications of Reducing Disease Burden.</a>
+      </div>
+    </div>
 
-       <p class="normal" style="margin-top:0;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
 
-      The (causal) effects of each diagnosis are estimated using an event-study methodology that compares individuals diagnosed within a narrow time window but in different calendar years. Individuals diagnosed with the same condition in a later year serve as a control group for individuals diagnosed in an earlier year.
+      <!-- Methodology -->
+      <div class="card">
+        <h3 style="margin:0 0 10px 0; font-size:14px; font-weight:700; color:#2d3748; text-transform:uppercase; letter-spacing:.04em;">Methodology</h3>
+        <p class="normal" style="margin:0 0 8px 0;">
+          Effects are estimated using an <strong>event-study design</strong>: individuals diagnosed with the same condition in a later calendar year serve as a control group for those diagnosed earlier.
+        </p>
+        <p class="normal" style="margin:0 0 8px 0;">
+          <strong>Mortality</strong> is an exception — later-year cohorts cannot serve as controls by construction. It is estimated via multivariate regression controlling for all 333 other diagnoses and an age polynomial.
+        </p>
+        <p class="normal" style="margin:0;">
+          <strong>Diagnosis graph</strong> — Links represent one-year Granger-causal relationships. For each diagnosis, a Lasso regression predicts the probability of receiving that diagnosis in year T+1 using indicators for all 334 diagnoses in year T, age, age², and permanent income tercile dummies. The link strength is the estimated increase in probability (in percentage points).
+        </p>
+	<br>
+        <p class="normal" style="margin:0;">For full details see <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4282600" target="_blank">Crego et al. (2025)</a>.</p>
+      </div>
 
-      An exception is mortality. Individuals diagnosed in later years, by construction, have not yet experienced mortality at the time earlier cohorts are observed and therefore cannot serve as a control group. Mortality effects are instead estimated using a multivariate regression that controls for indicators of being diagnosed with any of the other 333 diagnoses in a given year, as well as an age polynomial.
+      <!-- Tabs guide -->
+      <div class="card">
+        <h3 style="margin:0 0 10px 0; font-size:14px; font-weight:700; color:#2d3748; text-transform:uppercase; letter-spacing:.04em;">Dashboard tabs</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:6px 8px 6px 0; font-weight:600; white-space:nowrap; color:#2b6cb0;">Effects explorer</td>
+            <td style="padding:6px 0; color:#4a5568;">Event-study plots by diagnosis, outcome &amp; subgroup</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:6px 8px 6px 0; font-weight:600; white-space:nowrap; color:#2b6cb0;">Rank diagnoses</td>
+            <td style="padding:6px 0; color:#4a5568;">Rank by effect size, weighted or unweighted by incidence</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:6px 8px 6px 0; font-weight:600; white-space:nowrap; color:#2b6cb0;">Scatter plots</td>
+            <td style="padding:6px 0; color:#4a5568;">Cross-outcome or cross-group scatter across all 334 diagnoses</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:6px 8px 6px 0; font-weight:600; white-space:nowrap; color:#2b6cb0;">Diagnoses</td>
+            <td style="padding:6px 0; color:#4a5568;">ICD-10 correspondence, incidence &amp; treatment setting</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px 6px 0; font-weight:600; white-space:nowrap; color:#2b6cb0;">Diagnosis graph</td>
+            <td style="padding:6px 0; color:#4a5568;">Directed Granger-causal graph between diagnoses</td>
+          </tr>
+        </table>
+      </div>
+    </div>
 
-    For further methodological details, see Crego et al. (2025).
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
 
-         
-      </p>
-      
-      <h3 style="margin:14px 0 6px 0;">Definitions</h3>
-      <ul class="list" style="margin-top:6px;">
-        <li><b>Outcome</b>: The endpoint being studied (e.g., labor participation) at a given relative year. See below for detailed definitions.</li>
-        <li><b>Sex</b>: Male or female, as recorded by Statistics Netherlands based on municipal registers.</li>
-        <li><b>Age group</b>: Age category (e.g., 25–44) based on age in the year of diagnosis.</li>
-        <li><b>Income</b>: Permanent income group (low / medium / high terciles), determined from lifetime labor earnings adjusted for age.</li>
-        <li><b>Relative year</b>: Time since diagnosis in years (..., Dx-1, Dx+0, Dx+1, ...).</li>
-      </ul>
+      <!-- Dimensions -->
+      <div class="card">
+        <h3 style="margin:0 0 10px 0; font-size:14px; font-weight:700; color:#2d3748; text-transform:uppercase; letter-spacing:.04em;">Dimensions</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Sex</td>
+            <td style="padding:5px 0; color:#4a5568;">Male or female, from Statistics Netherlands municipal registers</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Age group</td>
+            <td style="padding:5px 0; color:#4a5568;">Category based on age in the year of diagnosis (e.g., 25–44)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Income</td>
+            <td style="padding:5px 0; color:#4a5568;">Permanent income tercile (low / medium / high), from lifetime labor earnings adjusted for age</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Relative year</td>
+            <td style="padding:5px 0; color:#4a5568;">Years since diagnosis (Dx−1, Dx+0, Dx+1, …)</td>
+          </tr>
+        </table>
+        <p class="small" style="margin:10px 0 0 0; color:#718096;">Not all sex–age–income combinations are available for every outcome. For example, labor participation is not estimated for ages 65+; nursing home use is only available for ages 65+. Some estimates use aggregated groups (e.g., sex–age only, or full population).</p>
+      </div>
 
-      
-      <h3 style="margin:14px 0 6px 0;">Outcomes</h3>
-      <ul class="list" style="margin-top:6px;">
-        <li><b>Medical expenses</b>: Annual medical expenses covered by the mandatory Dutch basic health insurance scheme (including expenses paid via deductibles), in euros.</li>
-        <li><b>Mortality</b>: Binary indicator equal to 1 if the individual has died during the given year or in any previous year.</li>
-        <li><b>Physical health limitations</b>: Age-standardized index of functional limitations, proxied by mapping medicine use and categorical medical expenditure data to survey-based OECD functional limitation items. A 1-unit increase corresponds to a 1 standard deviation increase in limitations at a given age.</li> 
-        <li><b>Mental health limitations</b>: Age-standardized index of mental health problems, proxied by mapping medicine use and categorical medical expenditure data to survey-based Kessler Psychological Distress Scale (K10) items. A 1-unit increase corresponds to a 1 standard deviation increase in limitations at a given age.</li>
-        <li><b>Labor participation</b>: Binary indicator equal to 1 if the individual’s main source of income is employment earnings, as determined by Statistics Netherlands.</li>
-        <li><b>Log labor earnings</b>: Natural logarithm of annual gross employment earnings (in euros).</li>
-        <li><b>Full disability</b>: Binary indicator equal to 1 if the individual receives a disability benefit (WIA or WGA) and is assessed as at least 80% disabled.</li>
-        <li><b>Nursing home use</b>: Binary indicator equal to 1 if the individual resides in a nursing home in the given year.</li>
-      </ul>
+      <!-- Outcomes -->
+      <div class="card">
+        <h3 style="margin:0 0 10px 0; font-size:14px; font-weight:700; color:#2d3748; text-transform:uppercase; letter-spacing:.04em;">Outcomes</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Medical expenses</td>
+            <td style="padding:5px 0; color:#4a5568;">Annual expenses under the Dutch basic health insurance scheme, in €</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Mortality</td>
+            <td style="padding:5px 0; color:#4a5568;">Cumulative death indicator (1 if died in or before given year)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Physical limitations</td>
+            <td style="padding:5px 0; color:#4a5568;">Age-standardized index (1 SD = 1 unit); mapped from medicine use &amp; expenditure to OECD functional limitation items</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Mental limitations</td>
+            <td style="padding:5px 0; color:#4a5568;">Age-standardized index (1 SD = 1 unit); mapped to Kessler K10 distress scale items</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Labor participation</td>
+            <td style="padding:5px 0; color:#4a5568;">1 if main income source is employment earnings</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Log labor earnings</td>
+            <td style="padding:5px 0; color:#4a5568;">Log of annual gross employment earnings (€)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #eee;">
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Full disability</td>
+            <td style="padding:5px 0; color:#4a5568;">1 if receiving WIA/WGA benefit at ≥ 80% assessed disability</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 10px 5px 0; font-weight:600; white-space:nowrap;">Nursing home use</td>
+            <td style="padding:5px 0; color:#4a5568;">1 if residing in a nursing home in the given year</td>
+          </tr>
+        </table>
+      </div>
 
-      <p class="normal" style="margin-top:0;">
-
-               
-      Some outcomes are flow variables (e.g., annual medical expenses), while others are stock variables (e.g., mortality).
-
-      <br>
-      Effect estimates are available for different sex–age–income groups, although not all combinations are reported. For example, labor participation estimates are not available for individuals aged 65 and over, as most individuals in this age group are retired. Conversely, nursing home use estimates are not available for individuals under age 65. In addition, some estimates are available at more aggregated levels (e.g., sex–age groups aggregated over income, or the full population).
-
-      </p>
-
-      <h3 style="margin:14px 0 6px 0;">Tabs</h3>
-      <ul class="list" style="margin-top:6px;">
-        <li><b>Effects explorer</b>: Explore estimates by diagnosis, outcome, and subgroup. </li>
-        <li><b>Rank diagnoses</b>: Rank diagnoses by effect size (weighted or unweighted by incidence), either in the aggregate or within age–sex–income groups.</li>
-        <li><b>Scatter plots</b>: Plot estimates for the 334 diagnoses across outcomes, relative years, or demographic groups.</li>
-        <li><b>Diagnoses</b>: Information on the 334 medical diagnoses, including ICD-10 correspondence, incidence, and frequency of treatment setting (inpatient or outpatient).</li>
-        <li><b>Diagnosis graph</b>: Directed graph of one-year Granger-causal relationships between the 334 diagnoses.</li>
-      </ul>
     </div>
   </div>
 
@@ -486,7 +546,7 @@
     <div class="grid">
       <div class="card">
         <div id="status3" class="status">Loading graph…</div>
-        <div class="small">Pick a diagnosis, then show outgoing or incoming edges (directed, weighted).</div>
+        <div class="small">Pick a diagnosis, then sex and age group, then show outgoing or incoming edges.</div>
 
         <div class="spacer"></div>
 
@@ -496,6 +556,13 @@
           <div class="panel" id="panel-disease3"></div>
         </div>
         <input type="hidden" id="disease3" />
+
+        <div class="spacer"></div>
+
+        <div class="row">
+          <div><label>Sex</label><select id="sex3"></select></div>
+          <div><label>Age group</label><select id="age3"></select></div>
+        </div>
 
         <div class="spacer"></div>
 
@@ -928,7 +995,13 @@
       orderedGroupNames().filter(g=>groupsToDiseases[g]).forEach(groupName => {
         const diseaseIds = groupsToDiseases[groupName];
         const visible = q
-          ? diseaseIds.filter(id => diseaseMetaById[id].disease.toLowerCase().includes(q))
+          ? diseaseIds.filter(id => {
+              const m = diseaseMetaById[id];
+              const icd = diagById.get(id)?.icd_code || "";
+              return m.disease.toLowerCase().includes(q) ||
+                     String(id).toLowerCase().includes(q) ||
+                     icd.toLowerCase().includes(q);
+            })
           : diseaseIds.slice();
         if (q && visible.length === 0) return;
 
@@ -964,7 +1037,8 @@
 
           const label = document.createElement("label");
           label.style.margin = "0";
-          label.textContent = meta.disease;
+          const icd = diagById.get(id)?.icd_code || "";
+          label.innerHTML = `ID${id} &middot; ${meta.disease}` + (icd ? ` <span style="font-size:11px;color:#888;">(${icd})</span>` : "");
 
           row.appendChild(cb);
           row.appendChild(label);
@@ -1023,7 +1097,12 @@
 
       orderedGroupNames().filter(g=>groupsToIds[g]).forEach(g => {
         const ids = groupsToIds[g];
-        const visible = q ? ids.filter(id => (idToLabel[id] || id).toLowerCase().includes(q)) : ids.slice();
+        const visible = q ? ids.filter(id => {
+          const icd = diagById.get(id)?.icd_code || "";
+          return (idToLabel[id] || id).toLowerCase().includes(q) ||
+                 String(id).toLowerCase().includes(q) ||
+                 icd.toLowerCase().includes(q);
+        }) : ids.slice();
         if (q && visible.length === 0) return;
 
         const details = document.createElement("details");
@@ -1046,13 +1125,14 @@
           radio.value = id;
           radio.onchange = () => {
             onSelect(id);
-            $(btnId).textContent = idToLabel[id] || id;
+            $(btnId).textContent = `ID${id} · ${idToLabel[id] || id}`;
             $(panelId).classList.remove("open");
           };
 
+          const icd = diagById.get(id)?.icd_code || "";
           const label = document.createElement("label");
           label.style.margin = "0";
-          label.textContent = idToLabel[id] || id;
+          label.innerHTML = `ID${id} &middot; ${idToLabel[id] || id}` + (icd ? ` <span style="font-size:11px;color:#888;">(${icd})</span>` : "");
 
           row.appendChild(radio);
           row.appendChild(label);
@@ -1094,7 +1174,49 @@
 
   function setStatus1(msg) { $("status1").textContent = msg; }
 
+  function updateExplorerAvailability() {
+    if (!rows.length) return;
+    const outcome = $("outcome1").value;
+    const selSexes   = [...state.sexes];
+    const selAges    = [...state.ages];
+    const selIncomes = [...state.incomes];
+
+    // For each dimension, find which values exist given the current outcome
+    // and at least one value from each of the other two dimensions (union — don't over-restrict)
+    const dims = [
+      { panelId: "panel-sex",    field: "sex",       currentVals: selSexes,   otherA: { field: "age_group", vals: selAges    }, otherB: { field: "income", vals: selIncomes } },
+      { panelId: "panel-age",    field: "age_group", currentVals: selAges,    otherA: { field: "sex",       vals: selSexes   }, otherB: { field: "income", vals: selIncomes } },
+      { panelId: "panel-income", field: "income",    currentVals: selIncomes, otherA: { field: "sex",       vals: selSexes   }, otherB: { field: "age_group", vals: selAges } }
+    ];
+
+    for (const dim of dims) {
+      const available = new Set();
+      for (const r of rows) {
+        if (r.outcome !== outcome) continue;
+        // match other dims: if nothing selected in that dim, treat as "any"
+        const aVals = dim.otherA.vals;
+        const bVals = dim.otherB.vals;
+        if (aVals.length && !aVals.includes(r[dim.otherA.field])) continue;
+        if (bVals.length && !bVals.includes(r[dim.otherB.field])) continue;
+        available.add(String(r[dim.field]));
+      }
+      const panel = $(dim.panelId);
+      if (!panel) continue;
+      panel.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        const unavail = !available.has(cb.value);
+        if (unavail && !cb.checked) {
+          cb.disabled = true;
+          cb.parentElement.style.opacity = "0.35";
+        } else {
+          cb.disabled = false;
+          cb.parentElement.style.opacity = "";
+        }
+      });
+    }
+  }
+
   function syncLabelsAndRender1() {
+    updateExplorerAvailability();
     const dLabels = [...state.diseases].map(id => __diseaseMetaById?.[id]?.disease || id);
     updateButtonLabel("btn-disease", dLabels, "Select up to 2…", 2);
     updateButtonLabel("btn-sex", [...state.sexes], "Select up to 2…", 2);
@@ -1202,6 +1324,39 @@ traces.push({
   // ---------- Tab 2: ranking ----------
   function setStatus2(msg) { $("status2").textContent = msg; }
 
+  function updateRankAvailability() {
+    if (!rows.length) return;
+    const allDims = [
+      { id: "outcome2", field: "outcome" },
+      { id: "sex2",     field: "sex" },
+      { id: "income2",  field: "income" },
+      { id: "age2",     field: "age_group" },
+      { id: "year2",    field: "rel_year" }
+    ];
+    const grayDims = allDims.filter(d => d.field !== "outcome");
+    const vals = {};
+    allDims.forEach(d => { vals[d.field] = $(d.id).value; });
+
+    grayDims.forEach(dim => {
+      const available = new Set();
+      for (const r of rows) {
+        let match = true;
+        for (const other of allDims) {
+          if (other.field === dim.field) continue;
+          if (String(r[other.field]) !== String(vals[other.field])) { match = false; break; }
+        }
+        if (match) available.add(String(r[dim.field]));
+      }
+      const sel = $(dim.id);
+      if (!sel) return;
+      for (const opt of sel.options) {
+        const unavail = !available.has(opt.value);
+        opt.disabled = unavail;
+        opt.style.color = unavail ? "#bbb" : "";
+      }
+    });
+  }
+
   function renderRank() {
     if (!rows.length) return;
 
@@ -1241,9 +1396,14 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       const est = Number(r.estimate);
       const burden = (est * Number(r.n)) / 4.75;
             
+      const did = r.disease_id;
+      const diseaseName = (__diseaseMetaById?.[did]?.disease) || did;
+      const icd = diagById.get(did)?.icd_code || "";
+      const diagLabel = `ID${did} · ${diseaseName}${icd ? ` <span style="font-size:11px;color:#888;">(${icd})</span>` : ""}`;
+
       tr.innerHTML = `
-        <td>${(__diseaseMetaById?.[r.disease_id]?.disease_group) || ''}</td>
-        <td>${(__diseaseMetaById?.[r.disease_id]?.disease) || r.disease_id}</td>
+        <td>${(__diseaseMetaById?.[did]?.disease_group) || ''}</td>
+        <td>${diagLabel}</td>
         <td class="right">${isMed ? formatThousands(est) : toFixed3(est)}</td>
         <td class="right">${isMed ? formatThousands(burden) : toFixed3(burden)}</td>
         <td class="right">${isMed ? formatThousands(r.ci_low)  : toFixed3(r.ci_low)}</td>
@@ -1266,6 +1426,45 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
 
   function getIndexedRow({ disease_id, outcome, sex, age_group, income, rel_year }) {
     return effectsIndex.get(idxKey(disease_id, outcome, sex, age_group, income, rel_year));
+  }
+
+  function updateScatterAvailability() {
+    if (!rows.length) return;
+    const series = [
+      { outcome: "outcomeX", sex: "sexX", age: "ageX", income: "incomeX", year: "yearX" },
+      { outcome: "outcomeY", sex: "sexY", age: "ageY", income: "incomeY", year: "yearY" }
+    ];
+    for (const s of series) {
+      const allDims = [
+        { key: "outcome", selectId: s.outcome, field: "outcome"   },
+        { key: "sex",     selectId: s.sex,     field: "sex"       },
+        { key: "age",     selectId: s.age,     field: "age_group" },
+        { key: "income",  selectId: s.income,  field: "income"    },
+        { key: "year",    selectId: s.year,    field: "rel_year"  }
+      ];
+      const grayDims = allDims.filter(d => d.key !== "outcome");
+      const vals = {};
+      allDims.forEach(d => { vals[d.key] = $(d.selectId) ? $(d.selectId).value : ""; });
+
+      for (const dim of grayDims) {
+        const available = new Set();
+        for (const r of rows) {
+          let match = true;
+          for (const other of allDims) {
+            if (other.key === dim.key) continue;
+            if (String(r[other.field]) !== String(vals[other.key])) { match = false; break; }
+          }
+          if (match) available.add(String(r[dim.field]));
+        }
+        const sel = $(dim.selectId);
+        if (!sel) continue;
+        for (const opt of sel.options) {
+          const unavail = !available.has(opt.value);
+          opt.disabled = unavail;
+          opt.style.color = unavail ? "#bbb" : "";
+        }
+      }
+    }
   }
 
   function renderScatter() {
@@ -1459,10 +1658,25 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
 
   // ---------- Tab 3: disease graph
   let links = [];
-  let outAdj = new Map(); // disease_id -> [{to, w}]
-  let inAdj  = new Map(); // disease_id -> [{from, w}]
 
   function setStatus3(msg) { $("status3").textContent = msg; }
+
+  function buildAdjacency(sex, age) {
+    const outAdj = new Map();
+    const inAdj  = new Map();
+    for (const e of links) {
+      if (e.sex !== sex || e.age_group !== age) continue;
+      const src = e.disease_id_from;
+      const dst = e.disease_id_to;
+      const w = Number(e.link_strength);
+      if (src == null || dst == null || !Number.isFinite(w)) continue;
+      if (!outAdj.has(src)) outAdj.set(src, []);
+      if (!inAdj.has(dst))  inAdj.set(dst, []);
+      outAdj.get(src).push({ to: dst, w });
+      inAdj.get(dst).push({ from: src, w });
+    }
+    return { outAdj, inAdj };
+  }
 
   async function loadLinks() {
     const resp = await fetch("./disease_links.csv?cb=1");
@@ -1472,21 +1686,57 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
     links = parsed.data;
 
-    outAdj = new Map();
-    inAdj = new Map();
+    // Populate sex and age selects from data
+    const sexVals3  = [...new Set(links.map(e => e.sex).filter(Boolean))].sort();
+    const ageVals3  = [...new Set(links.map(e => e.age_group).filter(Boolean))].sort();
 
-    for (const e of links) {
-      const src = e.disease_id_from;
-      const dst = e.disease_id_to;
-      const w = Number(e.link_strength);
-      if (src == null || dst == null || !Number.isFinite(w)) continue;
-      if (!outAdj.has(src)) outAdj.set(src, []);
-      if (!inAdj.has(dst)) inAdj.set(dst, []);
-      outAdj.get(src).push({ to: dst, w });
-      inAdj.get(dst).push({ from: src, w });
+    const sel3sex = $("sex3");
+    const sel3age = $("age3");
+    if (sel3sex) {
+      sel3sex.innerHTML = "";
+      sexVals3.forEach(v => { const o = document.createElement("option"); o.value = o.textContent = v; sel3sex.appendChild(o); });
+    }
+    if (sel3age) {
+      sel3age.innerHTML = "";
+      ageVals3.forEach(v => { const o = document.createElement("option"); o.value = o.textContent = v; sel3age.appendChild(o); });
     }
 
     setStatus3(`Loaded ${links.length.toLocaleString()} edges. Ready.`);
+  }
+
+  function updateGraphAvailability() {
+    const didRaw = $("disease3")?.value;
+    const sel3sex = $("sex3");
+    const sel3age = $("age3");
+    if (!sel3sex || !sel3age) return;
+
+    if (!didRaw) {
+      // no diagnosis selected — enable everything
+      for (const opt of sel3sex.options) { opt.disabled = false; opt.style.color = ""; }
+      for (const opt of sel3age.options) { opt.disabled = false; opt.style.color = ""; }
+      return;
+    }
+
+    const did = Number(didRaw);
+    const availSex = new Set();
+    const availAge = new Set();
+    for (const e of links) {
+      if (e.disease_id_from === did || e.disease_id_to === did) {
+        if (e.sex)       availSex.add(e.sex);
+        if (e.age_group) availAge.add(e.age_group);
+      }
+    }
+
+    for (const opt of sel3sex.options) {
+      const unavail = !availSex.has(opt.value);
+      opt.disabled = unavail;
+      opt.style.color = unavail ? "#bbb" : "";
+    }
+    for (const opt of sel3age.options) {
+      const unavail = !availAge.has(opt.value);
+      opt.disabled = unavail;
+      opt.style.color = unavail ? "#bbb" : "";
+    }
   }
 
   function initTab3() {
@@ -1514,8 +1764,11 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       btnId: "btn-disease3",
       groupsToIds,
       idToLabel,
-      onSelect: (id) => { $("disease3").value = id || ""; }
+      onSelect: (id) => { $("disease3").value = id || ""; updateGraphAvailability(); }
     });
+
+    if ($("sex3"))  $("sex3").addEventListener("change", updateGraphAvailability);
+    if ($("age3"))  $("age3").addEventListener("change", updateGraphAvailability);
 
     $("outBtn3").onclick = () => renderGraphForSelection("out");
     $("inBtn3").onclick = () => renderGraphForSelection("in");
@@ -1532,6 +1785,10 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       return;
     }
     const did = Number(didRaw);
+    const sex = $("sex3")?.value || "";
+    const age = $("age3")?.value || "";
+
+    const { outAdj, inAdj } = buildAdjacency(sex, age);
 
     const neighbors = (direction === "out")
       ? (outAdj.get(did) || []).map(e => ({ id: e.to, w: e.w, dir: "out" }))
@@ -1554,7 +1811,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     const nodeHover = [];
 
     const metaCenter = __diseaseMetaById?.[did] || { disease: String(did), disease_group: "" };
-    nodeText.push(metaCenter.disease);
+    nodeText.push(`${metaCenter.disease} (ID${did})`);
     nodeHover.push(`<b>${metaCenter.disease}</b><br>${metaCenter.disease_group || ""}<br>ID: ${did}`);
 
     // Determine max |w| for scaling
@@ -1572,7 +1829,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       nodeY.push(ny);
 
       const m = __diseaseMetaById?.[neighbors[i].id] || { disease: String(neighbors[i].id), disease_group: "" };
-      nodeText.push(m.disease);
+      nodeText.push(`${m.disease} (ID${neighbors[i].id})`);
       nodeHover.push(`<b>${m.disease}</b><br>${m.disease_group || ""}<br>ID: ${neighbors[i].id}`);
 
       const w = Number(neighbors[i].w);
@@ -1584,17 +1841,31 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       const x1 = direction === "out" ? nx : center.x;
       const y1 = direction === "out" ? ny : center.y;
 
+      const wPct = (w * 100).toFixed(2);
+      const fromLabel = direction === "out" ? metaCenter.disease : m.disease;
+      const toLabel   = direction === "out" ? m.disease : metaCenter.disease;
+      const hoverLabel = `${fromLabel} → ${toLabel}<br>link strength: ${wPct} pp`;
+
+      // Line trace (no hover on lines in Plotly — hover handled by midpoint marker below)
       edgeTraces.push({
         type: "scatter",
         mode: "lines",
         x: [x0, x1],
         y: [y0, y1],
         line: { width, color: "#666" },
+        hoverinfo: "skip",
+        showlegend: false
+      });
+
+      // Invisible midpoint marker that carries the hover tooltip
+      edgeTraces.push({
+        type: "scatter",
+        mode: "markers",
+        x: [(x0 + x1) / 2],
+        y: [(y0 + y1) / 2],
+        marker: { size: 12, opacity: 0, color: "#666" },
         hoverinfo: "text",
-        hovertext: [
-          `link_strength: ${toFixed3(w)}<br>${direction === "out" ? metaCenter.disease : m.disease} → ${direction === "out" ? m.disease : metaCenter.disease}`,
-          `link_strength: ${toFixed3(w)}<br>${direction === "out" ? metaCenter.disease : m.disease} → ${direction === "out" ? m.disease : metaCenter.disease}`
-        ],
+        hovertext: [hoverLabel],
         showlegend: false
       });
     }
@@ -1625,8 +1896,8 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     };
 
     const title = direction === "out"
-      ? `Outgoing links from ${metaCenter.disease}`
-      : `Incoming links to ${metaCenter.disease}`;
+      ? `Outgoing links from ${metaCenter.disease} (${sex}, ${age})`
+      : `Incoming links to ${metaCenter.disease} (${sex}, ${age})`;
 
     Plotly.newPlot("graph3", [...edgeTraces, nodeTrace], {
       annotations,
@@ -1637,7 +1908,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       hovermode: "closest"
     }, { responsive: true });
 
-    $("graphInfo3").textContent = `${neighbors.length.toLocaleString()} ${direction === "out" ? "outgoing" : "incoming"} link(s). Line width reflects |link_strength|.`;
+    $("graphInfo3").textContent = `${neighbors.length.toLocaleString()} ${direction === "out" ? "outgoing" : "incoming"} link(s) for ${sex}, ${age}. Line width reflects |link_strength|.`;
   }
 
   async function loadData() {
@@ -1691,7 +1962,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
         if (i === 0) opt.selected = true;
         $("outcome1").appendChild(opt);
       });
-      $("outcome1").addEventListener("change", renderExplorer);
+      $("outcome1").addEventListener("change", () => { updateExplorerAvailability(); renderExplorer(); });
       if ($("ci1")) $("ci1").addEventListener("change", renderExplorer);
 
       // disease meta/hierarchy from diagnosis_groups.csv (also used by Diagnoses tab)
@@ -1813,7 +2084,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       if (yearVals.includes(0)) $("year2").value = "0";
 
       ["outcome2","sex2","income2","age2","year2","sort2","top2","weightN2"].forEach(id => {
-        $(id).addEventListener("change", renderRank);
+        $(id).addEventListener("change", () => { updateRankAvailability(); renderRank(); });
       });
 
       $("resetBtn2").onclick = () => {
@@ -1825,10 +2096,12 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
         $("sort2").value = "desc";
         $("top2").value = "50";
         if ($("weightN2")) $("weightN2").checked = false;
+        updateRankAvailability();
         renderRank();
       };
 
       setStatus2(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+      updateRankAvailability();
       renderRank();
 
       // ---- Tab 4 controls (Scatter: Option B) ----
@@ -1868,7 +2141,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
 
       ["colorSig4","onlySig4","sigDef4","fitReg4","outcomeX","sexX","ageX","incomeX","yearX","outcomeY","sexY","ageY","incomeY","yearY"].forEach(id => {
         const el = $(id);
-        if (el) el.addEventListener("change", renderScatter);
+        if (el) el.addEventListener("change", () => { updateScatterAvailability(); renderScatter(); });
       });
 
       $("resetBtn4").onclick = () => {
@@ -1890,10 +2163,12 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
         if ($("incomeY")) $("incomeY").selectedIndex = 0;
         if ($("yearY")) $("yearY").value = yearVals.includes(0) ? "0" : String(yearVals[0]);
 
+        updateScatterAvailability();
         renderScatter();
       };
 
       setStatus4(`Loaded ${rows.length.toLocaleString()} rows. Ready.`);
+      updateScatterAvailability();
       renderScatter();
 
       // ---- Tab 3 controls ----
