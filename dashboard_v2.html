@@ -1811,7 +1811,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     const nodeHover = [];
 
     const metaCenter = __diseaseMetaById?.[did] || { disease: String(did), disease_group: "" };
-    nodeText.push(metaCenter.disease);
+    nodeText.push(`${metaCenter.disease} (ID${did})`);
     nodeHover.push(`<b>${metaCenter.disease}</b><br>${metaCenter.disease_group || ""}<br>ID: ${did}`);
 
     // Determine max |w| for scaling
@@ -1829,7 +1829,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       nodeY.push(ny);
 
       const m = __diseaseMetaById?.[neighbors[i].id] || { disease: String(neighbors[i].id), disease_group: "" };
-      nodeText.push(m.disease);
+      nodeText.push(`${m.disease} (ID${neighbors[i].id})`);
       nodeHover.push(`<b>${m.disease}</b><br>${m.disease_group || ""}<br>ID: ${neighbors[i].id}`);
 
       const w = Number(neighbors[i].w);
