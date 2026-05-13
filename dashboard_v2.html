@@ -542,7 +542,14 @@
     <div class="grid">
       <div class="card">
         <div id="status3" class="status">Loading graph…</div>
-        <div class="small">Pick a diagnosis, then show outgoing or incoming edges (directed, weighted).</div>
+        <div class="small">Pick a sex, age group, and diagnosis, then show outgoing or incoming edges (directed, weighted).</div>
+
+        <div class="spacer"></div>
+
+        <div class="row">
+          <div><label>Sex</label><select id="sex3"></select></div>
+          <div><label>Age group</label><select id="age3"></select></div>
+        </div>
 
         <div class="spacer"></div>
 
@@ -1379,9 +1386,14 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       const est = Number(r.estimate);
       const burden = (est * Number(r.n)) / 4.75;
             
+      const did = r.disease_id;
+      const diseaseName = (__diseaseMetaById?.[did]?.disease) || did;
+      const icd = diagById.get(did)?.icd_code || "";
+      const diagLabel = `ID${did} · ${diseaseName}${icd ? ` <span style="font-size:11px;color:#888;">(${icd})</span>` : ""}`;
+
       tr.innerHTML = `
-        <td>${(__diseaseMetaById?.[r.disease_id]?.disease_group) || ''}</td>
-        <td>${(__diseaseMetaById?.[r.disease_id]?.disease) || r.disease_id}</td>
+        <td>${(__diseaseMetaById?.[did]?.disease_group) || ''}</td>
+        <td>${diagLabel}</td>
         <td class="right">${isMed ? formatThousands(est) : toFixed3(est)}</td>
         <td class="right">${isMed ? formatThousands(burden) : toFixed3(burden)}</td>
         <td class="right">${isMed ? formatThousands(r.ci_low)  : toFixed3(r.ci_low)}</td>
@@ -1636,10 +1648,25 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
 
   // ---------- Tab 3: disease graph
   let links = [];
-  let outAdj = new Map(); // disease_id -> [{to, w}]
-  let inAdj  = new Map(); // disease_id -> [{from, w}]
 
   function setStatus3(msg) { $("status3").textContent = msg; }
+
+  function buildAdjacency(sex, age) {
+    const outAdj = new Map();
+    const inAdj  = new Map();
+    for (const e of links) {
+      if (e.sex !== sex || e.age_group !== age) continue;
+      const src = e.disease_id_from;
+      const dst = e.disease_id_to;
+      const w = Number(e.link_strength);
+      if (src == null || dst == null || !Number.isFinite(w)) continue;
+      if (!outAdj.has(src)) outAdj.set(src, []);
+      if (!inAdj.has(dst))  inAdj.set(dst, []);
+      outAdj.get(src).push({ to: dst, w });
+      inAdj.get(dst).push({ from: src, w });
+    }
+    return { outAdj, inAdj };
+  }
 
   async function loadLinks() {
     const resp = await fetch("./disease_links.csv?cb=1");
@@ -1649,18 +1676,19 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     const parsed = Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true });
     links = parsed.data;
 
-    outAdj = new Map();
-    inAdj = new Map();
+    // Populate sex and age selects from data
+    const sexVals3  = [...new Set(links.map(e => e.sex).filter(Boolean))].sort();
+    const ageVals3  = [...new Set(links.map(e => e.age_group).filter(Boolean))].sort();
 
-    for (const e of links) {
-      const src = e.disease_id_from;
-      const dst = e.disease_id_to;
-      const w = Number(e.link_strength);
-      if (src == null || dst == null || !Number.isFinite(w)) continue;
-      if (!outAdj.has(src)) outAdj.set(src, []);
-      if (!inAdj.has(dst)) inAdj.set(dst, []);
-      outAdj.get(src).push({ to: dst, w });
-      inAdj.get(dst).push({ from: src, w });
+    const sel3sex = $("sex3");
+    const sel3age = $("age3");
+    if (sel3sex) {
+      sel3sex.innerHTML = "";
+      sexVals3.forEach(v => { const o = document.createElement("option"); o.value = o.textContent = v; sel3sex.appendChild(o); });
+    }
+    if (sel3age) {
+      sel3age.innerHTML = "";
+      ageVals3.forEach(v => { const o = document.createElement("option"); o.value = o.textContent = v; sel3age.appendChild(o); });
     }
 
     setStatus3(`Loaded ${links.length.toLocaleString()} edges. Ready.`);
@@ -1709,6 +1737,10 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       return;
     }
     const did = Number(didRaw);
+    const sex = $("sex3")?.value || "";
+    const age = $("age3")?.value || "";
+
+    const { outAdj, inAdj } = buildAdjacency(sex, age);
 
     const neighbors = (direction === "out")
       ? (outAdj.get(did) || []).map(e => ({ id: e.to, w: e.w, dir: "out" }))
@@ -1802,8 +1834,8 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
     };
 
     const title = direction === "out"
-      ? `Outgoing links from ${metaCenter.disease}`
-      : `Incoming links to ${metaCenter.disease}`;
+      ? `Outgoing links from ${metaCenter.disease} (${sex}, ${age})`
+      : `Incoming links to ${metaCenter.disease} (${sex}, ${age})`;
 
     Plotly.newPlot("graph3", [...edgeTraces, nodeTrace], {
       annotations,
@@ -1814,7 +1846,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       hovermode: "closest"
     }, { responsive: true });
 
-    $("graphInfo3").textContent = `${neighbors.length.toLocaleString()} ${direction === "out" ? "outgoing" : "incoming"} link(s). Line width reflects |link_strength|.`;
+    $("graphInfo3").textContent = `${neighbors.length.toLocaleString()} ${direction === "out" ? "outgoing" : "incoming"} link(s) for ${sex}, ${age}. Line width reflects |link_strength|.`;
   }
 
   async function loadData() {
