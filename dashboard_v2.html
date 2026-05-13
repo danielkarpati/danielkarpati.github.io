@@ -1157,7 +1157,49 @@
 
   function setStatus1(msg) { $("status1").textContent = msg; }
 
+  function updateExplorerAvailability() {
+    if (!rows.length) return;
+    const outcome = $("outcome1").value;
+    const selSexes   = [...state.sexes];
+    const selAges    = [...state.ages];
+    const selIncomes = [...state.incomes];
+
+    // For each dimension, find which values exist given the current outcome
+    // and at least one value from each of the other two dimensions (union — don't over-restrict)
+    const dims = [
+      { panelId: "panel-sex",    field: "sex",       currentVals: selSexes,   otherA: { field: "age_group", vals: selAges    }, otherB: { field: "income", vals: selIncomes } },
+      { panelId: "panel-age",    field: "age_group", currentVals: selAges,    otherA: { field: "sex",       vals: selSexes   }, otherB: { field: "income", vals: selIncomes } },
+      { panelId: "panel-income", field: "income",    currentVals: selIncomes, otherA: { field: "sex",       vals: selSexes   }, otherB: { field: "age_group", vals: selAges } }
+    ];
+
+    for (const dim of dims) {
+      const available = new Set();
+      for (const r of rows) {
+        if (r.outcome !== outcome) continue;
+        // match other dims: if nothing selected in that dim, treat as "any"
+        const aVals = dim.otherA.vals;
+        const bVals = dim.otherB.vals;
+        if (aVals.length && !aVals.includes(r[dim.otherA.field])) continue;
+        if (bVals.length && !bVals.includes(r[dim.otherB.field])) continue;
+        available.add(String(r[dim.field]));
+      }
+      const panel = $(dim.panelId);
+      if (!panel) continue;
+      panel.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        const unavail = !available.has(cb.value);
+        if (unavail && !cb.checked) {
+          cb.disabled = true;
+          cb.parentElement.style.opacity = "0.35";
+        } else {
+          cb.disabled = false;
+          cb.parentElement.style.opacity = "";
+        }
+      });
+    }
+  }
+
   function syncLabelsAndRender1() {
+    updateExplorerAvailability();
     const dLabels = [...state.diseases].map(id => __diseaseMetaById?.[id]?.disease || id);
     updateButtonLabel("btn-disease", dLabels, "Select up to 2…", 2);
     updateButtonLabel("btn-sex", [...state.sexes], "Select up to 2…", 2);
@@ -1267,21 +1309,22 @@ traces.push({
 
   function updateRankAvailability() {
     if (!rows.length) return;
-    const dims = [
+    const allDims = [
       { id: "outcome2", field: "outcome" },
       { id: "sex2",     field: "sex" },
       { id: "income2",  field: "income" },
       { id: "age2",     field: "age_group" },
       { id: "year2",    field: "rel_year" }
     ];
+    const grayDims = allDims.filter(d => d.field !== "outcome");
     const vals = {};
-    dims.forEach(d => { vals[d.field] = $(d.id).value; });
+    allDims.forEach(d => { vals[d.field] = $(d.id).value; });
 
-    dims.forEach(dim => {
+    grayDims.forEach(dim => {
       const available = new Set();
       for (const r of rows) {
         let match = true;
-        for (const other of dims) {
+        for (const other of allDims) {
           if (other.field === dim.field) continue;
           if (String(r[other.field]) !== String(vals[other.field])) { match = false; break; }
         }
@@ -1370,21 +1413,22 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
       { outcome: "outcomeY", sex: "sexY", age: "ageY", income: "incomeY", year: "yearY" }
     ];
     for (const s of series) {
-      const dims = [
+      const allDims = [
         { key: "outcome", selectId: s.outcome, field: "outcome"   },
         { key: "sex",     selectId: s.sex,     field: "sex"       },
         { key: "age",     selectId: s.age,     field: "age_group" },
         { key: "income",  selectId: s.income,  field: "income"    },
         { key: "year",    selectId: s.year,    field: "rel_year"  }
       ];
+      const grayDims = allDims.filter(d => d.key !== "outcome");
       const vals = {};
-      dims.forEach(d => { vals[d.key] = $(d.selectId) ? $(d.selectId).value : ""; });
+      allDims.forEach(d => { vals[d.key] = $(d.selectId) ? $(d.selectId).value : ""; });
 
-      for (const dim of dims) {
+      for (const dim of grayDims) {
         const available = new Set();
         for (const r of rows) {
           let match = true;
-          for (const other of dims) {
+          for (const other of allDims) {
             if (other.key === dim.key) continue;
             if (String(r[other.field]) !== String(vals[other.key])) { match = false; break; }
           }
@@ -1824,7 +1868,7 @@ list.sort((a,b) => sort === "asc" ? (score(a) - score(b)) : (score(b) - score(a)
         if (i === 0) opt.selected = true;
         $("outcome1").appendChild(opt);
       });
-      $("outcome1").addEventListener("change", renderExplorer);
+      $("outcome1").addEventListener("change", () => { updateExplorerAvailability(); renderExplorer(); });
       if ($("ci1")) $("ci1").addEventListener("change", renderExplorer);
 
       // disease meta/hierarchy from diagnosis_groups.csv (also used by Diagnoses tab)
